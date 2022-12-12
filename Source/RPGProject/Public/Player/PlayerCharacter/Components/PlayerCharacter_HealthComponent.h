@@ -7,6 +7,7 @@
 #include "PlayerCharacter_HealthComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnActorKilled, AActor*, VictimActor, AActor*, KillerActor, AController*, KillerController);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActorDamaged, float , NewHP);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RPGPROJECT_API UPlayerCharacter_HealthComponent : public UActorComponent
@@ -34,6 +35,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 		FOnActorKilled OnActorKilled;
+
+	UPROPERTY()
+		FOnActorDamaged OnActorDamaged;
 	
 	UFUNCTION(BlueprintCallable)
 		void TakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
@@ -41,5 +45,7 @@ public:
 	void HealActor(float HealAmount);
 
 	int32 GetCurrentHP();
+
+	float GetDefaultHP();
 	
 };

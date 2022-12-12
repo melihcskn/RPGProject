@@ -10,6 +10,16 @@
 class UMainMenu_BaseWidget;
 class UInputSettings;
 
+UENUM()
+enum EGameState
+{
+	Game,
+	Menu,
+	Loading
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGameStateChange,TEnumAsByte<EGameState>, SetGameState);
+
 /**
  * 
  */
@@ -26,5 +36,15 @@ protected:
 public:
 
 	UInputSettings* InputSetting;
+
+	bool bIsGameStarted;
+
+	void SetGameState(TEnumAsByte<EGameState> State);
+
+	UPROPERTY()
+	TEnumAsByte<EGameState> GameState;
+
+	UPROPERTY()
+	FOnGameStateChange GameStateChange;
 	
 };

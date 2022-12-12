@@ -6,6 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "PlayerInventory.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemRemove);
+
 class APlayerCharacter;
 USTRUCT(BlueprintType)
 struct FInventory
@@ -63,6 +65,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 ItemFinder(FString ItemNameToFind);
+
+	UPROPERTY()
+	FOnItemRemove OnItemRemove;
 
 	UFUNCTION(BlueprintCallable)
     void RemoveItem(int32 ItemIndex, int32 Quantity);

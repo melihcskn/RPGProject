@@ -11,7 +11,7 @@
 // Sets default values for this component's properties
 UPlayerCharacter_HealthComponent::UPlayerCharacter_HealthComponent()
 {
-	DefaultHP = 10000.0f;
+	DefaultHP = 100.0f;
 	CurrentHP = DefaultHP;
 	bIsDead = false;
 }
@@ -49,6 +49,8 @@ void UPlayerCharacter_HealthComponent::TakeDamage(AActor* DamagedActor, float Da
 		GetOwner()->SetActorEnableCollision(false);
 		OnActorKilled.Broadcast(DamagedActor, DamageCauser, InstigatedBy);
 	}
+	
+	OnActorDamaged.Broadcast(Damage);
 }
 
 void UPlayerCharacter_HealthComponent::HealActor(float HealAmount)
@@ -59,4 +61,9 @@ void UPlayerCharacter_HealthComponent::HealActor(float HealAmount)
 int32 UPlayerCharacter_HealthComponent::GetCurrentHP()
 {
 	return CurrentHP;
+}
+
+float UPlayerCharacter_HealthComponent::GetDefaultHP()
+{
+	return DefaultHP;
 }

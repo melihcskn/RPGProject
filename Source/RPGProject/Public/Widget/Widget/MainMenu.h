@@ -32,7 +32,7 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UMainMenu_BaseButton* OptionsButton;
-
+	
 	UFUNCTION()
 	void StartGame();
 

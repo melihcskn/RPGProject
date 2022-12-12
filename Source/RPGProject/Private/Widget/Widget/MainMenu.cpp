@@ -25,7 +25,7 @@ void UMainMenu::NativeConstruct()
 	Super::NativeConstruct();
 
 	ControlledPawn=PC->GetPawn();
-	// PC->UnPossess();
+	GI->SetGameState(EGameState::Menu);
 	
 	StartGameButton = Cast<UMainMenu_BaseButton>(CreateWidget(this,MyHud->MenuButtonClass));
 	OptionsButton = Cast<UMainMenu_BaseButton>(CreateWidget(this,MyHud->MenuButtonClass));
@@ -55,17 +55,16 @@ void UMainMenu::NativeConstruct()
 //Set StartGame button
 void UMainMenu::StartGame()
 {
-	// if(ControlledPawn)
-	// PC->Possess(ControlledPawn);
-	UGameplayStatics::OpenLevel(this,"MainMap");
+	GI->bIsGameStarted = true;
+	GI->SetGameState(EGameState::Game);
+	RemoveFromParent();
 }
 
 //Set ResumeGame button
 void UMainMenu::ResumeGame()
 {
-	// if(ControlledPawn)
-	// PC->Possess(ControlledPawn);
 	UGameplayStatics::SetGamePaused(this,false);
+	GI->SetGameState(EGameState::Game);
 	RemoveFromParent();
 }
 

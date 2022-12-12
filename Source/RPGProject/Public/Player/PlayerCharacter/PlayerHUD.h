@@ -3,11 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MyGameInstance.h"
 #include "GameFramework/HUD.h"
 #include "PlayerHUD.generated.h"
 
+class UMyGameInstance;
 class UMainMenu_BaseWidget;
-
+class UProgressBar;
+class UTextBlock;
+class APlayerCharacter;
+class UPlayerInventory;
+class UPlayerCharacter_HealthComponent;
+class UPlayerHUDWidget;
+class APlayerWeapon;
 /**
  * 
  */
@@ -19,9 +27,41 @@ class RPGPROJECT_API APlayerHUD : public AHUD
 protected:
 
 	virtual void BeginPlay() override;
+
+	APlayerCharacter* Owner;
+
+	UPlayerInventory* OwnerInventory;
+
+	UPlayerCharacter_HealthComponent* OwnerHealth;
+
+	UPlayerHUDWidget* PlayerHUD;
+
+	APlayerWeapon* OwnerWeapon;
+
+	UMyGameInstance* GI;
+
+	FTimerHandle TimerHandle;
+
+	float Health;
+	
+	float HealthChangeRate;
 	
 	UPROPERTY(EditDefaultsOnly)
 	UTexture2D* CrosshairTexture;
+
+	void SetHealth();
+
+	UFUNCTION()
+	void RefreshOnHealthChange(float Damage);
+
+	UFUNCTION()
+	void RefeshOnItemChange();
+
+	UFUNCTION()
+	void RefreshOnWeaponChange(bool bIsEquipped, APlayerWeapon* PlayerWeapon);
+
+	UFUNCTION()
+	void RefreshOnGameStateChange(TEnumAsByte<EGameState> State);
 
 
 public:
@@ -31,7 +71,7 @@ public:
 	UMainMenu_BaseWidget* CurrentWidget;
 
 	TArray<UMainMenu_BaseWidget*> WidgetHistory;
-
+	
 	void RemoveWidget();
 	
 	static FVector2D CrossHairDot;
@@ -62,4 +102,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> ControlItemClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> PlayerHUDWidgetClass;
 };

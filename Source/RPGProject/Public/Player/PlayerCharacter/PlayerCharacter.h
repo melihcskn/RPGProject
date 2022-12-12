@@ -18,6 +18,9 @@ class UMyGameInstance;
 class APlayerHUD;
 class AWidgetPlayerController;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponEquipped, bool, bIsEquipped, APlayerWeapon*, PlayerWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCharacterFired);
+
 UCLASS(Blueprintable)
 class RPGPROJECT_API APlayerCharacter : public ACharacter
 {
@@ -197,12 +200,6 @@ protected:
 		void Aiming();
 
 	UFUNCTION(BlueprintCallable)
-		uint8 GetWeaponAmmo();
-	
-	UFUNCTION(BlueprintCallable)
-		uint8 GetMaxMagSize();
-
-	UFUNCTION(BlueprintCallable)
 		int32 GetCurrentAmmo();
 
 	UFUNCTION(BlueprintCallable)
@@ -229,14 +226,34 @@ public:
 
 	void ApplyFallDamage();
 
+	void AddItemToPlayerInventory(FString ItemName, UTexture2D* ItemTexture,int32 ItemQuantity);
+
+	void SetPlayerInputs();
+
+	UPlayerInventory* GetInventoryComponent();
+
+	UPlayerCharacter_HealthComponent* GetHealthComponent();
+
+	UPROPERTY()
+	FOnWeaponEquipped OnWeaponEquipped;
+
+	UPROPERTY()
+	FOnCharacterFired OnCharacterFired;
+
+	UPROPERTY(EditAnywhere,Category="Camera")
+	TSubclassOf<UMatineeCameraShake> FireCamShake;
+
+	UFUNCTION(BlueprintCallable)
+		uint8 GetWeaponAmmo();
+	
+	UFUNCTION(BlueprintCallable)
+		uint8 GetMaxMagSize();
+
 	UFUNCTION(BlueprintCallable)
 		void DisableMoving();
 
 	UFUNCTION(BlueprintCallable)
 		void EnableMoving();
-	
-	UPROPERTY(EditAnywhere,Category="Camera")
-		TSubclassOf<UMatineeCameraShake> FireCamShake;
 	
 	UFUNCTION()
 		void OnOverlapBegin(AActor* OverlappedActor, AActor* OtherActor);
@@ -249,8 +266,4 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void RefreshActiveQuest();
-
-	void AddItemToPlayerInventory(FString ItemName, UTexture2D* ItemTexture,int32 ItemQuantity);
-
-	void SetPlayerInputs();
 };

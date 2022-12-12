@@ -154,25 +154,33 @@ void APlayerCharacter::MainMenu()
 void APlayerCharacter::MoveForward(float MovementSpeed)
 {
     if(CanMoveForward)
-	{AddMovementInput(GetActorForwardVector(), MovementSpeed);}
+    {
+	    AddMovementInput(GetActorForwardVector(), MovementSpeed);
+    }
 }
 
 void APlayerCharacter::MoveBackward(float MovementSpeed)
 {
 	if(CanMoveBackward)
-	{AddMovementInput(-GetActorForwardVector(), MovementSpeed);}
+	{
+		AddMovementInput(-GetActorForwardVector(), MovementSpeed);
+	}
 }
 
 void APlayerCharacter::MoveRight(float MovementSpeed)
 {
 	if(CanMoveRight)
-	{AddMovementInput(GetActorRightVector(), MovementSpeed);}
+	{
+		AddMovementInput(GetActorRightVector(), MovementSpeed);
+	}
 }
 
 void APlayerCharacter::MoveLeft(float MovementSpeed)
 {
 	if(CanMoveLeft)
-	{AddMovementInput(-GetActorRightVector(), MovementSpeed);}
+	{
+		AddMovementInput(-GetActorRightVector(), MovementSpeed);
+	}
 }
 
 void APlayerCharacter::StartFire()
@@ -210,6 +218,7 @@ void APlayerCharacter::Fire()
 	{
 		RecoilCurve = FMath::Clamp(RecoilCurve*2,0.0f,1.6f);
 		ControlledWeapon->SetRemainingBulletInMag(ControlledWeapon->GetRemainBulletInMag() - 1);
+		OnCharacterFired.Broadcast();
 		ControlledWeapon->Fire_VFX();
 		ControlledWeapon->PlayFireSound();
 		UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), 1.0f, this, 0.0f, "Noise");
@@ -348,8 +357,8 @@ void APlayerCharacter::ReloadMagazine()
 		}
 		else
 		{
-			PlayerInventory->RemoveItem(AmmoIndex,(ControlledWeapon->GetMaximumMagazine() - LeftBulletCount));
 			ControlledWeapon->SetRemainingBulletInMag(ControlledWeapon->GetMaximumMagazine());
+			PlayerInventory->RemoveItem(AmmoIndex,(ControlledWeapon->GetMaximumMagazine() - LeftBulletCount));
 			bIsReloadActive = false;
 		}
 	}
@@ -380,6 +389,11 @@ void APlayerCharacter::ApplyFallDamage()
 		}
 		FallDamageFlag = false;
 	}
+}
+
+UPlayerInventory* APlayerCharacter::GetInventoryComponent()
+{
+	return PlayerInventory;
 }
 
 bool APlayerCharacter::PlayerWeapon_LineTrace()
@@ -444,6 +458,7 @@ void APlayerCharacter::PrepareControlledWeapon(APlayerWeapon* TargetWeapon)
 	TargetWeapon->SetOwner(this);
 	TargetWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
 	ADSCameraComp->AttachToComponent(TargetWeapon->GetWeaponMesh(),FAttachmentTransformRules::KeepRelativeTransform,TargetWeapon->GetADSSocketName());
+	OnWeaponEquipped.Broadcast(true,TargetWeapon);
 }
 
 void APlayerCharacter::Jump()
@@ -453,6 +468,11 @@ void APlayerCharacter::Jump()
 		Super::Jump();
 		IsJumped=true;
 	}
+}
+
+UPlayerCharacter_HealthComponent* APlayerCharacter::GetHealthComponent()
+{
+	return PlayerHealth;
 }
 
 void APlayerCharacter::DisableMoving()

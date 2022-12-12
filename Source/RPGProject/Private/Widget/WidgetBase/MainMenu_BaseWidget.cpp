@@ -15,13 +15,12 @@
 
 void UMainMenu_BaseWidget::NativeConstruct()
 {
-
 	Super::NativeConstruct();
-	bIsFocusable = true;
 	
+	bIsFocusable = true;
 	SetFocus();
 	SelectedItemIndex = 0;
-	//Pre casting 
+	//Pre casting
 	GI = Cast<UMyGameInstance>(GetWorld()->GetGameInstance());
 	PC = Cast<AWidgetPlayerController>(UGameplayStatics::GetPlayerController(this,0));
 	MyHud = Cast<APlayerHUD>(PC->GetHUD());

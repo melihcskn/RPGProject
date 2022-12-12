@@ -91,6 +91,7 @@ void UPlayerInventory::RemoveItem(int32 ItemIndex, int32 Quantity)
 	{
 		Inventory.RemoveAt(ItemIndex);
 	}
+	OnItemRemove.Broadcast();
 	MyOwner->RefreshInventory();
 }
 
