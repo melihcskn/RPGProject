@@ -19,11 +19,13 @@
 #include "Kismet/GameplayStatics.h"
 #include "Player/PlayerCharacter/Components/PlayerInventory.h"
 #include "WidgetPlayerController.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GenericPlatform/GenericApplication.h"
 #include "Perception/AISense_Hearing.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Widget/Widget/MainMenu.h"
+#include "MyGameModeBase.h"
 #include "Widget/WidgetBase/MainMenu_BaseWidget.h"
 
 // Sets default values
@@ -32,54 +34,80 @@ APlayerCharacter::APlayerCharacter()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
-	SpringArmComp->bUsePawnControlRotation = true;
-	SpringArmComp->SetupAttachment(RootComponent);
-
-	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
-	CameraComp->SetupAttachment(SpringArmComp);
-	CameraComp->bUsePawnControlRotation = true;
-
-	ADSCameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("ADSCameraComp"));
-	ADSCameraComp->SetRelativeRotation(FRotator(90,180,180));
-	ADSCameraComp->SetRelativeScale3D(FVector(0.1f));
-	
-	PlayerHealth = CreateDefaultSubobject<UPlayerCharacter_HealthComponent>(TEXT("HealthComponent"));
-	PlayerInventory = CreateDefaultSubobject<UPlayerInventory>(TEXT("InventoryComponent"));
-	PlayerQuests = CreateDefaultSubobject<UPlayerQuests>(TEXT("QuestComponent"));
-
-	WeaponSocketName = "WeaponSocket";
 	ACharacter::GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	
 	this->OnActorBeginOverlap.AddDynamic(this, &APlayerCharacter::OnOverlapBegin);
 	this->OnActorEndOverlap.AddDynamic(this, &APlayerCharacter::OnOverlapEnd);
-	PlayerHealth->OnActorKilled.AddDynamic(this,&APlayerCharacter::APlayerCharacter::GetCoinByKill);
-	PlayerCoin = 500;
-	RecoilCurve = 0.1f;
-	WalkSpeed = 300.0f;
-	RunSpeed = 600.0f;
+
+	DefaultCharacterLocationVector = FVector(0.0f,0.0f,-90.0f);
+	DefaultCharacterRotation = FRotator(0.0f,0.0f,-90.f);
+	
+	GetMesh()->SetRelativeLocation(DefaultCharacterLocationVector);
+	GetMesh()->SetRelativeRotation(DefaultCharacterRotation);
+	
+	WeaponSocketName = "WeaponSocket";
+	EyeSocketName="EyeSocket";
+
+	AmmoItemID = "0101";
+
 	QParams = FCollisionQueryParams::DefaultQueryParam;
 	QParams.AddIgnoredActor(this);
 	QParams.bReturnPhysicalMaterial = true;
 	QParams.bTraceComplex = true;
+
+	DefaultSpringArmVector = FVector(0.0f,0.0f,70.0f);
+	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
+	SpringArmComp->bUsePawnControlRotation = true;
+	SpringArmComp->SetupAttachment(RootComponent);
+	SpringArmComp->SetRelativeLocation(DefaultSpringArmVector);
+	SpringArmComp->TargetArmLength = 0.0f;
+
+	//Third person camera
+	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
+	DefaultCameraVector = FVector(-170.0f,46.0f,-15.0f);
+	CameraComp->SetupAttachment(SpringArmComp);
+	CameraComp->bUsePawnControlRotation = false;
+	CameraComp->SetRelativeLocation(DefaultCameraVector);
+
+	//First person camera
+	ADSCameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("ADSCameraComp"));
+	ADSCameraComp->SetRelativeScale3D(FVector(0.1f));
+	ADSCameraComp->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepWorldTransform,EyeSocketName);
+	ADSCameraComp->SetWorldRotation(GetMesh()->GetSocketRotation(EyeSocketName));
+	
+	//Player components
+	PlayerHealth = CreateDefaultSubobject<UPlayerCharacter_HealthComponent>(TEXT("HealthComponent"));
+	PlayerInventory = CreateDefaultSubobject<UPlayerInventory>(TEXT("InventoryComponent"));
+	PlayerQuests = CreateDefaultSubobject<UPlayerQuests>(TEXT("QuestComponent"));
+	
+	PlayerHealth->OnActorKilled.AddDynamic(this,&APlayerCharacter::APlayerCharacter::GetCoinByKill);
+
+	//Camera transition duration
+	AdsDuration = 0.5f;
+	PlayerCoin = 500;
+	RecoilCurve = 0.1f;
+	WalkSpeed = 300.0f;
+	RunSpeed = 600.0f;
 }
+
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (ControlledWeapon)
-	{
-		PrepareControlledWeapon(ControlledWeapon);
-	}
-	LastWeaponFire = GetWorld()->TimeSeconds;
-
-	PlayerCont=UGameplayStatics::GetPlayerController(GetWorld(),0);
-	EnableMoving();
 
 	PC = Cast<AWidgetPlayerController>(UGameplayStatics::GetPlayerController(this,0));
 	GI = Cast<UMyGameInstance>(GetWorld()->GetGameInstance());
 	MyPlayerHUD = Cast<APlayerHUD>(PC->GetHUD());
+	
+	ADSCameraComp->SetActive(false);
+
+	GI->LoadGame();
+	
+	LastWeaponFire = GetWorld()->TimeSeconds;
+
+	PlayerCont=UGameplayStatics::GetPlayerController(GetWorld(),0);
+	EnableMoving();
 	
 }
 
@@ -128,12 +156,79 @@ uint8 APlayerCharacter::GetMaxMagSize()
 	return 0;
 }
 
+void APlayerCharacter::Aim()
+{
+	if(ControlledWeapon)
+	{
+		if(bIsAiming)
+		{
+			StopAiming();
+		}
+		else
+		{
+			StartAiming();
+		}
+	}
+}
+
+void APlayerCharacter::StartAiming()
+{
+	AdsTimeCounter = 0.0f;
+	GetWorldTimerManager().SetTimer(TimerHandle_AdsCam,this,&APlayerCharacter::SetAdsCam,0.01f,true,0.1f);
+	bIsAiming=true;
+}
+
+void APlayerCharacter::StopAiming()
+{
+	AdsTimeCounter = 0.0f;
+	CameraComp->SetWorldLocationAndRotation(ADSCameraComp->GetComponentLocation(),ADSCameraComp->GetComponentRotation());
+	ADSCameraComp->SetActive(false);
+	CameraComp->SetActive(true);
+	GetWorldTimerManager().SetTimer(TimerHandle_AdsCam,this,&APlayerCharacter::ReverseAdsCam,0.01f,true,0.1f);
+	bIsAiming=false;
+}
+
+void APlayerCharacter::SetAdsCam()
+{
+	if(AdsTimeCounter<AdsDuration)
+	{
+		float LerpAlpha = AdsTimeCounter/AdsDuration;
+		CameraComp->SetWorldLocation(FMath::Lerp(CameraComp->GetComponentLocation(),ADSCameraComp->GetComponentLocation(),LerpAlpha));
+		CameraComp->SetWorldRotation(FMath::Lerp(CameraComp->GetComponentRotation(),ADSCameraComp->GetComponentRotation(),LerpAlpha));
+		AdsTimeCounter += 0.01f;
+	}
+	else
+	{
+		CameraComp->SetActive(false);
+		ADSCameraComp->SetActive(true);
+		GetWorldTimerManager().ClearTimer(TimerHandle_AdsCam);
+	}
+}
+
+void APlayerCharacter::ReverseAdsCam()
+{
+	if(AdsTimeCounter<AdsDuration)
+	{
+		float LerpAlpha = AdsTimeCounter/AdsDuration;
+		CameraComp->SetRelativeLocation(FMath::Lerp(CameraComp->GetRelativeLocation(),DefaultCameraVector,LerpAlpha));
+		CameraComp->SetRelativeRotation(FMath::Lerp(CameraComp->GetRelativeRotation(),FRotator(0.0f),LerpAlpha));
+		AdsTimeCounter += 0.01f;
+	}
+	else
+	{
+		GetWorldTimerManager().ClearTimer(TimerHandle_AdsCam);
+	}
+}
+
 //Get current ammunition on player
 int32 APlayerCharacter::GetCurrentAmmo()
 {
-	int32 AmmoIndex = PlayerInventory->ItemFinder("Ammunition");
-	if(AmmoIndex==999) return 0;
-	return PlayerInventory->Inventory[AmmoIndex].ItemQuantity;
+	bool bIsItemFound;
+	int32 AmmoIndex = PlayerInventory->ItemIndexFinder(AmmoItemID,bIsItemFound);
+	if(bIsItemFound)
+		return PlayerInventory->GetInventoryItems()[AmmoIndex].ItemQuantity;
+	
+	return 0;
 }
 
 //Open main menu
@@ -214,7 +309,7 @@ void APlayerCharacter::StopFire()
 void APlayerCharacter::Fire()
 {
 	//Check if player is reloading && Stop fire if mag is empty
-	if (ControlledWeapon && !bIsReloadActive && ControlledWeapon->GetRemainBulletInMag() > 0 )
+	if (ControlledWeapon && (PlayerState!=EPlayerState::Reloading) && ControlledWeapon->GetRemainBulletInMag() > 0 )
 	{
 		RecoilCurve = FMath::Clamp(RecoilCurve*2,0.0f,1.6f);
 		ControlledWeapon->SetRemainingBulletInMag(ControlledWeapon->GetRemainBulletInMag() - 1);
@@ -267,13 +362,11 @@ void APlayerCharacter::StopRun()
 //Reload current weapon
 void APlayerCharacter::Reload()
 {
-	int32 AmmoIndex = PlayerInventory->ItemFinder("Ammunition");
-	if(AmmoIndex==999)
+	bool bIsItemFound;
+	int32 AmmoIndex = PlayerInventory->ItemIndexFinder(AmmoItemID,bIsItemFound);
+	if (bIsItemFound && PlayerInventory->GetInventoryItems()[AmmoIndex].ItemQuantity > 0 && (ControlledWeapon->GetRemainBulletInMag() != ControlledWeapon->GetMaximumMagazine()))
 	{
-		return;
-	}
-	if (PlayerInventory->Inventory[AmmoIndex].ItemQuantity > 0 && (ControlledWeapon->GetRemainBulletInMag() != ControlledWeapon->GetMaximumMagazine()))
-	{
+		PlayerState = EPlayerState::Reloading;
 		PlayReloadAnim();
 	}
 }
@@ -300,68 +393,44 @@ void APlayerCharacter::ChangeWeaponFireMode()
 	}
 }
 
-void APlayerCharacter::PickUp()//TODO Fix Interact function for all interactable object by using Interface
+void APlayerCharacter::PickUp()
 {
-	if (OverlappedGun && OverlappedGun->IsA(APlayerWeapon::StaticClass()))
+	if(!OverlappedItem)
+		return;
+	if(IInterface_InteractableItem* InteractableItemObject = Cast<IInterface_InteractableItem>(OverlappedItem))
 	{
-		if (ControlledWeapon == nullptr && OverlappedGun != nullptr)
-		{
-			ControlledWeapon = OverlappedGun;
-			PrepareControlledWeapon(ControlledWeapon);
-		}
-		else if (ControlledWeapon != nullptr && OverlappedGun != ControlledWeapon && OverlappedGun != nullptr)
-		{
-			APlayerWeapon* Swap = ControlledWeapon;
-			OverlappedGun->DisableComponentsSimulatePhysics();
-			ControlledWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-			ControlledWeapon = OverlappedGun;
-			PrepareControlledWeapon(ControlledWeapon);
-			Swap->SetActorEnableCollision(true);
-			Swap->GetWeaponMesh()->SetSimulatePhysics(true);
-			Swap->SetOwner(nullptr);
-		}
-	}
-	else if (OverlappedItem && OverlappedItem->IsA(APickUpItem::StaticClass()) && PlayerInventory)
-	{
-		FString ItemName = OverlappedItem->GetClass()->GetDisplayNameText().ToString();
-		PlayerInventory->AddItem(ItemName, OverlappedItem->GetPickUpItemTexture(),1);
-		OverlappedItem->Destroy();
-	}
-	else
-	{
-		Interact();
+		InteractableItemObject->Interact(this);
+		MyPlayerHUD->SetInteract(ESlateVisibility::Hidden);
 	}
 }
 
 void APlayerCharacter::ReloadMagazine()
 {
+	bool bIsItemFound;
 	//Find ammunition index from player inventory
-	int32 AmmoIndex = PlayerInventory->ItemFinder("Ammunition");
+	int32 AmmoIndex = PlayerInventory->ItemIndexFinder(AmmoItemID,bIsItemFound);
 	
-	if(AmmoIndex==999)
-	{
-		return;
-	}
 	/*Check if player has ammo in inventory
 	 *and player weapons mag condition
 	 */
-	if (PlayerInventory->Inventory[AmmoIndex].ItemQuantity > 0 && (ControlledWeapon->GetRemainBulletInMag() != ControlledWeapon->GetMaximumMagazine()))
+	if (bIsItemFound && PlayerInventory->GetInventoryItems()[AmmoIndex].ItemQuantity > 0 && (ControlledWeapon->GetRemainBulletInMag() != ControlledWeapon->GetMaximumMagazine()))
 	{
 		//Getting remaining bullet in mag, so remaining bullets in mag wont be destroyed
 		uint8 LeftBulletCount = ControlledWeapon->GetRemainBulletInMag();
-		if ((ControlledWeapon->GetMaximumMagazine() - LeftBulletCount) >= PlayerInventory->Inventory[AmmoIndex].ItemQuantity)
+		if ((ControlledWeapon->GetMaximumMagazine() - LeftBulletCount) >= PlayerInventory->GetInventoryItems()[AmmoIndex].ItemQuantity)
 		{
-			ControlledWeapon->SetRemainingBulletInMag(PlayerInventory->Inventory[AmmoIndex].ItemQuantity+LeftBulletCount);
-			PlayerInventory->RemoveItem(AmmoIndex,PlayerInventory->Inventory[AmmoIndex].ItemQuantity);
+			ControlledWeapon->SetRemainingBulletInMag(PlayerInventory->GetInventoryItems()[AmmoIndex].ItemQuantity+LeftBulletCount);
+			PlayerInventory->RemoveItem(AmmoItemID,PlayerInventory->GetInventoryItems()[AmmoIndex].ItemQuantity);
 			bIsReloadActive = false;
 		}
 		else
 		{
 			ControlledWeapon->SetRemainingBulletInMag(ControlledWeapon->GetMaximumMagazine());
-			PlayerInventory->RemoveItem(AmmoIndex,(ControlledWeapon->GetMaximumMagazine() - LeftBulletCount));
+			PlayerInventory->RemoveItem(AmmoItemID,(ControlledWeapon->GetMaximumMagazine() - LeftBulletCount));
 			bIsReloadActive = false;
 		}
 	}
+	PlayerState = EPlayerState::Idle;
 }
 
 //Check fall damage
@@ -415,16 +484,6 @@ bool APlayerCharacter::PlayerWeapon_LineTrace()
 	return false;
 }
 
-void APlayerCharacter::UseHealthPotion()//TODO Move this to InteractableItem
-{
-	int32 ItemIndex = PlayerInventory->ItemFinder("Health Potion");
-	if (ItemIndex != 999 && PlayerInventory->GetInventoryPlayerCharacter()[ItemIndex].ItemQuantity > 0 && PlayerHealth->GetCurrentHP() != 100)
-	{
-		PlayerHealth->HealActor(20.0f);
-		PlayerInventory->RemoveItem(ItemIndex, 1);
-	}
-}
-
 //Fire animation
 void APlayerCharacter::PlayFireAnim()
 {
@@ -453,12 +512,26 @@ void APlayerCharacter::PlayReloadAnim()
 
 void APlayerCharacter::PrepareControlledWeapon(APlayerWeapon* TargetWeapon)
 {
-	TargetWeapon->GetWeaponMesh()->SetSimulatePhysics(false);
-	TargetWeapon->SetActorEnableCollision(false);
-	TargetWeapon->SetOwner(this);
-	TargetWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
-	ADSCameraComp->AttachToComponent(TargetWeapon->GetWeaponMesh(),FAttachmentTransformRules::KeepRelativeTransform,TargetWeapon->GetADSSocketName());
-	OnWeaponEquipped.Broadcast(true,TargetWeapon);
+	if(ControlledWeapon==nullptr)
+	{
+		TargetWeapon->GetWeaponMesh()->SetSimulatePhysics(false);
+		TargetWeapon->SetActorEnableCollision(false);
+		// TargetWeapon->SetOwner(this);
+		TargetWeapon->SetWeaponOwner(this);
+		TargetWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
+		ControlledWeapon = TargetWeapon;
+		OnWeaponEquipped.Broadcast(true,TargetWeapon);
+	}
+	else
+	{
+		ControlledWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		ControlledWeapon->GetWeaponMesh()->SetSimulatePhysics(true);
+		ControlledWeapon->SetActorEnableCollision(true);
+		ControlledWeapon->SetWeaponOwner(nullptr);
+		ControlledWeapon->SetActorLocationAndRotation(TargetWeapon->GetActorLocation(),TargetWeapon->GetActorRotation());
+		ControlledWeapon=nullptr;
+		PrepareControlledWeapon(TargetWeapon);
+	}
 }
 
 void APlayerCharacter::Jump()
@@ -495,13 +568,10 @@ void APlayerCharacter::EnableMoving()
 
 void APlayerCharacter::OnOverlapBegin(AActor* OverlappedActor, AActor* OtherActor)
 {
-	if (OtherActor->IsA(APlayerWeapon::StaticClass()))
+	OverlappedItem = OtherActor;
+	if(Cast<IInterface_InteractableItem>(OtherActor))
 	{
-		OverlappedGun = Cast<APlayerWeapon>(OtherActor);
-	}
-	if (OtherActor->IsA(APickUpItem::StaticClass()))
-	{
-		OverlappedItem = Cast<APickUpItem>(OtherActor);
+		MyPlayerHUD->SetInteract(ESlateVisibility::Visible,Cast<IInterface_InteractableItem>(OtherActor)->GetItemName());
 	}
 }
 
@@ -509,11 +579,38 @@ void APlayerCharacter::OnOverlapEnd(AActor* OverlappedActor, AActor* OtherActor)
 {
 	OverlappedGun = nullptr;
 	OverlappedItem = nullptr;
+	MyPlayerHUD->SetInteract(ESlateVisibility::Hidden);
 }
 
-void APlayerCharacter::AddItemToPlayerInventory(FString ItemName, UTexture2D* ItemTexture,int32 ItemQuantity)
+void APlayerCharacter::AddItemToPlayerInventory(FName ItemID)
 {
-	PlayerInventory->AddItem(ItemName,ItemTexture,ItemQuantity);
+	AMyGameModeBase* MyGameModeBase;
+	MyGameModeBase = Cast<AMyGameModeBase>(GetWorld()->GetAuthGameMode());
+	if(MyGameModeBase)
+	{
+		bool bIsItemFound = false;
+		FItem TempItem;
+		TempItem = MyGameModeBase->FindItem(ItemID,bIsItemFound);
+		if(bIsItemFound && PlayerInventory)
+			PlayerInventory->AddItem(TempItem);
+	}
+}
+
+void APlayerCharacter::AddItemToPlayerInventory(FName ItemID, int32 QuantityToAdd)
+{
+	AMyGameModeBase* MyGameModeBase;
+	MyGameModeBase = Cast<AMyGameModeBase>(GetWorld()->GetAuthGameMode());
+	if(MyGameModeBase)
+	{
+		bool bIsItemFound = false;
+		FItem TempItem;
+		TempItem = MyGameModeBase->FindItem(ItemID,bIsItemFound);
+		if(bIsItemFound && PlayerInventory)
+		{
+			TempItem.ItemQuantity = QuantityToAdd;
+			PlayerInventory->AddItem(TempItem);
+		}
+	}
 }
 
 void APlayerCharacter::SetPlayerInputs()
@@ -531,15 +628,27 @@ void APlayerCharacter::SetPlayerInputs()
 		PlayerInputComp->BindAction("Run",EInputEvent::IE_Released,this,&APlayerCharacter::StopRun);
 		PlayerInputComp->BindAction("Crouch", EInputEvent::IE_Pressed, this, &APlayerCharacter::BeginCrouch);
 		PlayerInputComp->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::EndCrouch);
-		PlayerInputComp->BindAction("Aiming", EInputEvent::IE_Pressed, this, &APlayerCharacter::Aiming);
+		PlayerInputComp->BindAction("Aiming", EInputEvent::IE_Pressed, this, &APlayerCharacter::Aim);
 		PlayerInputComp->BindAction("Fire", EInputEvent::IE_Pressed, this, &APlayerCharacter::StartFire);
 		PlayerInputComp->BindAction("Fire", EInputEvent::IE_Released, this, &APlayerCharacter::StopFire);
 		PlayerInputComp->BindAction("Reload", EInputEvent::IE_Pressed, this, &APlayerCharacter::Reload);
 		PlayerInputComp->BindAction("WeaponFireModeChange", EInputEvent::IE_Pressed, this, &APlayerCharacter::ChangeWeaponFireMode);
 		PlayerInputComp->BindAction("PickUp", EInputEvent::IE_Pressed, this, &APlayerCharacter::PickUp);
 		PlayerInputComp->BindAction("Inventory", EInputEvent::IE_Pressed, this, &APlayerCharacter::ShowInventory);
-		PlayerInputComp->BindAction("UseHealthPotion", EInputEvent::IE_Pressed, this, &APlayerCharacter::UseHealthPotion);
 		PlayerInputComp->BindAction("OpenMainMenu", EInputEvent::IE_Pressed, this, &APlayerCharacter::MainMenu);
+		PlayerInputComp->BindAction("SaveGame", EInputEvent::IE_Pressed, this, &APlayerCharacter::SaveGame);
+	}
+}
+
+UClass* APlayerCharacter::GetWeaponClass()
+{
+	if(ControlledWeapon)
+	{
+		return ControlledWeapon->GetClass();
+	}
+	else
+	{
+		return nullptr;
 	}
 }
 
@@ -551,6 +660,11 @@ void APlayerCharacter::DecreaseCoin(int32 DecreaseAmount)
 int32 APlayerCharacter::GetPlayerCoin()
 {
 	return PlayerCoin;
+}
+
+void APlayerCharacter::SaveGame()
+{
+	GI->SaveGame();
 }
 
 void APlayerCharacter::GetCoinByKill(AActor* VictimActor, AActor* KillerActor, AController* KillerController)

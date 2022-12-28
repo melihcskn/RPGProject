@@ -71,6 +71,10 @@ public:
 	UMainMenu_BaseWidget* CurrentWidget;
 
 	TArray<UMainMenu_BaseWidget*> WidgetHistory;
+
+	void SetInteract(ESlateVisibility VisibilityOption, FString ItemName);
+
+	void SetInteract(ESlateVisibility VisibilityOption);
 	
 	void RemoveWidget();
 	

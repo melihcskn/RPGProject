@@ -3,14 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
+#include "Interface_InteractableItem.h"
 #include "Components/Image.h"
 #include "GameFramework/Actor.h"
 #include "PickUpItem.generated.h"
 
 class USphereComponent;
+
 UCLASS()
-class RPGPROJECT_API APickUpItem : public AActor
+class RPGPROJECT_API APickUpItem : public AActor, public IInterface_InteractableItem
 {
 	GENERATED_BODY()
 	
@@ -18,26 +19,23 @@ public:
 	// Sets default values for this actor's properties
 	APickUpItem();
 
-	UTexture2D* GetPickUpItemTexture();
+	virtual void Interact(UObject* InteractedObject) override;
 
-	FString GetPickUpItemName();
-
-	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
-		FString ItemName;
+	virtual FString GetItemName() override;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Item ID")
+	FName ItemID;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Item ID")
+	FName ItemName;
 
 	UPROPERTY(EditDefaultsOnly,Category="Components")
 		UStaticMeshComponent* StaticMeshComp;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 		USphereComponent* OverlapComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Name")
-		FString SetPickupItemName = "PickUpItem";
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Name")
-		UTexture2D* ItemPicture;
 };

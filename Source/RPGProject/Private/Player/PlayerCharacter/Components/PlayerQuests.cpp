@@ -13,7 +13,6 @@ UPlayerQuests::UPlayerQuests()
 void UPlayerQuests::AddQuest(FString QName, int32 ItemQuantity, FString QExplanation, FString QItem, UTexture2D* QItemImage)
 {
 	PlayerQuestList.Push(FPlayerQuestsStruct(QName,ItemQuantity,QExplanation,QItem,QItemImage));
-	MyOwner->RefreshActiveQuest();
 }
 
 void UPlayerQuests::SetQuest(TArray<FPlayerQuestsStruct> QuestToSet)
@@ -37,7 +36,6 @@ bool UPlayerQuests::IsQuestTaken(FString QuestNameToFind)
 void UPlayerQuests::RemoveQuest(int32 QuestIndexToRemove)
 {
 	PlayerQuestList.RemoveAt(QuestIndexToRemove);
-	MyOwner->RefreshActiveQuest();
 }
 
 int32 UPlayerQuests::FindQuest(FString QuestNameToFind)

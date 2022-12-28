@@ -17,6 +17,16 @@ class UPlayerQuests;
 class UMyGameInstance;
 class APlayerHUD;
 class AWidgetPlayerController;
+struct FItem;
+
+UENUM()
+enum EPlayerState
+{
+	Idle,
+	Aiming,
+	Reloading,
+	Jumping
+};
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponEquipped, bool, bIsEquipped, APlayerWeapon*, PlayerWeapon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCharacterFired);
@@ -32,10 +42,11 @@ private:
 
 	UInputComponent* PlayerInputComp;
 	
-protected:
+protected:	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	//Movement
 	void MoveForward(float MovementSpeed);
 
 	void MoveBackward(float MovementSpeed);
@@ -44,7 +55,7 @@ protected:
 
 	void MoveLeft(float MovementSpeed);
 
-	void Fire();
+	virtual void Jump() override;
 
 	void StartRun();
 
@@ -59,20 +70,12 @@ protected:
 	void ChangeWeaponFireMode();
 
 	void PickUp();
-	
-	bool PlayerWeapon_LineTrace();
-
-	void UseHealthPotion();
 
 	void PlayFireAnim();
 
 	void PlayReloadAnim();
 
-	void PrepareControlledWeapon(APlayerWeapon* TargetWeapon);
-
-	FInputActionBinding myActionBinding;
-
-	virtual void Jump() override;
+	EPlayerState PlayerState;
 
 	UPROPERTY(EditDefaultsOnly,Category="Movement")
 	float WalkSpeed;
@@ -95,23 +98,48 @@ protected:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Movement")
 	bool CanJumpp;
 
+
+	//Weapon&Fire
+
+	void Fire();
+	
+	bool PlayerWeapon_LineTrace();
+
+	void StartAiming();
+	
+	void StopAiming();
+
+	void SetAdsCam();
+
+	void ReverseAdsCam();
+
+	float RecoilCurve;
+	
 	float LastWeaponFire;
 
-	FVector LocationBeforeFall,LocationAfterFall;
+	float AdsDuration;
 
-	bool FallDamageFlag;
+	float AdsTimeCounter;
 
-	FString LastItemName;
+	FName AmmoItemID;
 
 	FHitResult WeaponLineTrace_HitResult;
 
+	FTimerHandle TimerHandle_AdsCam;
+
 	FTimerHandle TimerHandle_WeaponAutomaticFire;
 
-	FTimerHandle TimerHandle_WeaponSingleFire;
+	UPROPERTY(BlueprintReadWrite)
+	APlayerWeapon* ControlledWeapon = nullptr;
 
-	FDamageEvent DmgEvent;
+	UFUNCTION(BlueprintCallable)
+		void StartFire();
 
-	float RecoilCurve;
+	UFUNCTION(BlueprintCallable)
+		void StopFire();
+	
+
+	//Declarations
 
 	AWidgetPlayerController* PC;
 	
@@ -121,21 +149,32 @@ protected:
 	
 	APlayerController* PlayerCont;
 
+	APlayerWeapon* OverlappedGun;
+
+	AActor* OverlappedItem;
+
+	APlayerCharacter* TempCharacter;
+	
+	//
+	
+	FVector DefaultCameraVector, DefaultSpringArmVector, DefaultCharacterLocationVector;
+
+	FRotator DefaultCharacterRotation;
+
+	FName EyeSocketName;
+
+	FVector LocationBeforeFall,LocationAfterFall;
+
+	bool FallDamageFlag;
+
+	FDamageEvent DmgEvent;
+
 	FCollisionQueryParams QParams;
-
-	int32* AmmoOnPlayer = nullptr;
-
-	UPROPERTY(BlueprintReadWrite)
-	APlayerWeapon* ControlledWeapon = nullptr;
 
 	FName WeaponSocketName;
 
-	APlayerWeapon* OverlappedGun;
-
-	APickUpItem* OverlappedItem;
-
-	APlayerCharacter* TempCharacter;
-
+	//Anim Montage
+	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Montage")
 		UAnimMontage* AimFire_Montage;
 
@@ -147,6 +186,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Montage")
 		UAnimMontage* HipReload_Montage;
+
+	//Blueprint
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Coin")
 		int32 PlayerCoin;
@@ -162,18 +203,14 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite)
 		bool IsJumped = false;
-
-	UFUNCTION(BlueprintCallable)
-		void StartFire();
-
-	UFUNCTION(BlueprintCallable)
-		void StopFire();
 	
 	UFUNCTION(BlueprintImplementableEvent)
 		void ShowInventory();
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void PlayHitMarker();
+
+	//Components
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Player")
 		USpringArmComponent* SpringArmComp;
@@ -183,11 +220,8 @@ protected:
 		
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Player")
 		UCameraComponent* ADSCameraComp;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-		TSubclassOf<APlayerWeapon> WeaponClass;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Inventory")
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "Inventory")
 		UPlayerInventory* PlayerInventory;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player")
@@ -195,9 +229,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
 		UPlayerQuests* PlayerQuests;
+
+
+	//
 	
-	UFUNCTION(BlueprintImplementableEvent)
-		void Aiming();
+	UFUNCTION(BlueprintCallable)
+		void Aim();
 
 	UFUNCTION(BlueprintCallable)
 		int32 GetCurrentAmmo();
@@ -207,6 +244,9 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void Interact();
+
+	UFUNCTION(BlueprintCallable)
+		void SaveGame();
 
 	UFUNCTION()
 		void GetCoinByKill(AActor* VictimActor, AActor* KillerActor, AController* KillerController);
@@ -219,20 +259,16 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void DecreaseCoin(int32 DecreaseAmount);
-
-	int32 GetPlayerCoin();
 	
 	void ReloadMagazine();
 
 	void ApplyFallDamage();
 
-	void AddItemToPlayerInventory(FString ItemName, UTexture2D* ItemTexture,int32 ItemQuantity);
+	void PrepareControlledWeapon(APlayerWeapon* TargetWeapon);
 
-	void SetPlayerInputs();
+	void AddItemToPlayerInventory(FName ItemID);
 
-	UPlayerInventory* GetInventoryComponent();
-
-	UPlayerCharacter_HealthComponent* GetHealthComponent();
+	void AddItemToPlayerInventory(FName ItemID, int32 QuantityToAdd);
 
 	UPROPERTY()
 	FOnWeaponEquipped OnWeaponEquipped;
@@ -242,12 +278,6 @@ public:
 
 	UPROPERTY(EditAnywhere,Category="Camera")
 	TSubclassOf<UMatineeCameraShake> FireCamShake;
-
-	UFUNCTION(BlueprintCallable)
-		uint8 GetWeaponAmmo();
-	
-	UFUNCTION(BlueprintCallable)
-		uint8 GetMaxMagSize();
 
 	UFUNCTION(BlueprintCallable)
 		void DisableMoving();
@@ -261,9 +291,22 @@ public:
 	UFUNCTION()
 		void OnOverlapEnd(AActor* OverlappedActor, AActor* OtherActor);
 
-	UFUNCTION(BlueprintImplementableEvent)
-		void RefreshInventory();
+	//Get&Set
 
-	UFUNCTION(BlueprintImplementableEvent)
-		void RefreshActiveQuest();
+	void SetPlayerInputs();
+
+	int32 GetPlayerCoin();
+
+	UFUNCTION(BlueprintCallable)
+		uint8 GetWeaponAmmo();
+	
+	UFUNCTION(BlueprintCallable)
+		uint8 GetMaxMagSize();
+
+	UClass* GetWeaponClass();
+
+	UPlayerInventory* GetInventoryComponent();
+
+	UPlayerCharacter_HealthComponent* GetHealthComponent();
 };
+

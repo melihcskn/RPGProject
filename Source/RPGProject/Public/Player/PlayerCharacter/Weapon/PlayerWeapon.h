@@ -4,12 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Player/Interactable/Interface_InteractableItem.h"
 #include "PlayerWeapon.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
+class APlayerCharacter;
+class UCapsuleComponent;
+
 UCLASS(Blueprintable)
-class RPGPROJECT_API APlayerWeapon : public AActor
+class RPGPROJECT_API APlayerWeapon : public AActor, public IInterface_InteractableItem
 {
 	GENERATED_BODY()
 	
@@ -21,6 +25,10 @@ protected:
 
 	virtual void BeginPlay() override;
 
+	virtual void Interact(UObject* InteractedObject) override;
+
+	uint8 RemainBulletInMag;
+
 	FName MuzzleSocketName;
 
 	FVector MuzzleLocation;
@@ -28,6 +36,8 @@ protected:
 	FName WeaponADSSocketName;
 
 	FCollisionQueryParams QueryParams;
+
+	APlayerCharacter* Owner;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 		float PitchRecoil;
@@ -57,9 +67,7 @@ protected:
 		float WeaponSpreadRatio;
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Category = "Weapon")
-		FString SetWeaponName="Gun";
-
-	uint8 RemainBulletInMag;
+		FString SetWeaponName="Name";
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 		USkeletalMeshComponent* SkeletalMeshComp;
@@ -69,6 +77,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 		UStaticMeshComponent* MagazineComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category= "Components")
+		UCapsuleComponent* CollisionComp;
 
 	UPROPERTY(EditDefaultsOnly,Category="Weapon")
 		UParticleSystem* FireFlash;
@@ -83,6 +94,10 @@ protected:
 		USoundBase* WeaponFireSound;
 
 public:
+
+	virtual FString GetItemName() override;
+
+	void SetWeaponOwner(APlayerCharacter* NewOwner);
 	
 	void Fire_VFX();
 

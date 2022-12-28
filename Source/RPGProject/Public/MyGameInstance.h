@@ -39,6 +39,10 @@ public:
 
 	bool bIsGameStarted;
 
+	void SaveGame();
+
+	void LoadGame();
+
 	void SetGameState(TEnumAsByte<EGameState> State);
 
 	UPROPERTY()

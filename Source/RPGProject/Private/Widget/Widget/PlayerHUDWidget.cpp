@@ -15,6 +15,7 @@ void UPlayerHUDWidget::NativeConstruct()
 
 void UPlayerHUDWidget::SetInitials()
 {
+	InteractionText->SetVisibility(ESlateVisibility::Hidden);
 	HealthBar->BarFillType = EProgressBarFillType::BottomToTop;
 	HealthBar->FillColorAndOpacity = FLinearColor(FColor::Red);
 }
@@ -35,6 +36,12 @@ void UPlayerHUDWidget::SetAmmo(int32 RemainingBulletInMag, int32 MaxMagSize)
 void UPlayerHUDWidget::SetAmmoTextHidden()
 {
 	AmmoText->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UPlayerHUDWidget::SetInteractionTextVisibility(ESlateVisibility VisibilityOption, FString StringToSet)
+{
+	InteractionText->SetText(FText::FromString(StringToSet));
+	InteractionText->SetVisibility(VisibilityOption);
 }
 
 void UPlayerHUDWidget::SetQuest()

@@ -3,34 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Player/Interactable/ItemDataAsset.h"
 #include "Components/ActorComponent.h"
 #include "PlayerInventory.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemRemove);
 
 class APlayerCharacter;
-USTRUCT(BlueprintType)
-struct FInventory
-{
-	GENERATED_BODY()
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Struct")
-	FString Item;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Struct")
-	int32 ItemQuantity;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Struct")
-	UTexture2D* ItemImage;
-
-	FInventory()
-	{
-		Item = "test";
-		ItemQuantity = 0;
-		ItemImage = nullptr;
-	}
-};
-
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RPGPROJECT_API UPlayerInventory : public UActorComponent
@@ -44,33 +23,35 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	TArray<FItem> InventoryItems;
+
+	float PlayerCoin;
+
+	float MaxPlayerCoin;
+
 	APlayerCharacter* MyOwner;
-
+	
 	int32 FreeInventorySlotFinder();
-
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 		float InventorySizeByPiece;
-	
-	UFUNCTION(BlueprintCallable)
-		TArray<FInventory> GetInventory();
-
-	UFUNCTION(BlueprintCallable)
-		void SetInventory(TArray<FInventory> InventoryToSet);
 
 public:
 
-	TArray<FInventory> Inventory;
-	
-	void AddItem(FString ItemName,UTexture2D* ItemTexture,int32 ItemQuantity);
+	void AddItem(FItem ItemToAdd);
+
+	void AddCoin(float CoinAmountToAdd);
+
+	int32 ItemIndexFinder(FName ItemIDToFind, bool& IsItemFound);
 
 	UFUNCTION(BlueprintCallable)
-	int32 ItemFinder(FString ItemNameToFind);
+	TArray<FItem> GetInventoryItems();
+
+	float GetPlayerCoin();
 
 	UPROPERTY()
 	FOnItemRemove OnItemRemove;
 
 	UFUNCTION(BlueprintCallable)
-    void RemoveItem(int32 ItemIndex, int32 Quantity);
-
-	TArray<FInventory> GetInventoryPlayerCharacter();
+    void RemoveItem(FName ItemIDToRemove, int32 Quantity);
 };

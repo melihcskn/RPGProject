@@ -7,6 +7,7 @@
 #include "Widget/WidgetBase/MainMenu_BaseWidget.h"
 #include "Player/PlayerCharacter/PlayerCharacter.h"
 #include "Engine/Canvas.h"
+#include "GameFramework/InputSettings.h"
 #include "Player/PlayerCharacter/Components/PlayerCharacter_HealthComponent.h"
 #include "Player/PlayerCharacter/Components/PlayerInventory.h"
 #include "Player/PlayerCharacter/Weapon/PlayerWeapon.h"
@@ -143,6 +144,25 @@ void APlayerHUD::RefreshOnGameStateChange(TEnumAsByte<EGameState> State)
 	{
 		if(PlayerHUD)
 			PlayerHUD->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void APlayerHUD::SetInteract(ESlateVisibility VisibilityOption, FString ItemName)
+{
+	if(PlayerHUD && VisibilityOption == ESlateVisibility::Visible)
+	{
+		TArray<FInputActionKeyMapping> KMapping;
+		GI->InputSetting->GetActionMappingByName("PickUp",KMapping);
+		FString StringToSet = FString("Press ").Append(KMapping[0].Key.GetDisplayName().ToString()).Append(" To Pick Up ").Append(ItemName);
+		PlayerHUD->SetInteractionTextVisibility(VisibilityOption,StringToSet);
+	}
+}
+
+void APlayerHUD::SetInteract(ESlateVisibility VisibilityOption)
+{
+	if(PlayerHUD)
+	{
+		PlayerHUD->SetInteractionTextVisibility(VisibilityOption,"");
 	}
 }
 

@@ -66,8 +66,7 @@ void AItemShop::TakeCoinFromPlayer(int32 ItemPrice,FString ItemName, UTexture2D*
 	
 	if((OverlappedActor->GetPlayerCoin() - ItemPrice)>=0 && OverlappedActor)
 	{
-		OverlappedActor->DecreaseCoin(ItemPrice);
-		OverlappedActor->AddItemToPlayerInventory(ItemName,ItemTexture,ItemQuantity);
+
 	}
 	else{ItemShopWarning();}
 }

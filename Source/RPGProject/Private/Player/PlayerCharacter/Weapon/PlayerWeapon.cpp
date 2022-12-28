@@ -5,32 +5,45 @@
 
 #include "DrawDebugHelpers.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/PlayerCharacter/PlayerHUD.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Player/PlayerCharacter/PlayerCharacter.h"
 
 
 // Sets default values
 APlayerWeapon::APlayerWeapon()
 {
+	FVector CapsuleCompVector = FVector(19.0f,0.0f,2.0f);
+	FVector CapsuleCompScale = FVector(2.0f,3.0f,1.0f);
+
+	// WeaponADSSocketName = "b_gun_sightsocket";
+	WeaponADSSocketName ="ADSSocket";
+	MuzzleSocketName = "b_gun_muzzleflash";
+	
 	SkeletalMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	SetRootComponent(SkeletalMeshComp);
 
+	CollisionComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collision"));
+	CollisionComp->SetupAttachment(RootComponent);
+	CollisionComp->SetRelativeLocation(CapsuleCompVector);
+	CollisionComp->SetRelativeScale3D(CapsuleCompScale);
+	CollisionComp->SetCollisionProfileName("OverlapAll");
+
 	SightComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Sight"));
-	SightComponent->SetupAttachment(SkeletalMeshComp, "Sight");
+	SightComponent->SetupAttachment(SkeletalMeshComp, WeaponADSSocketName);
 	SightComponent->SetSimulatePhysics(false);
 
 	MagazineComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Magazine"));
-
-	WeaponADSSocketName = "ADSSocket";
-	MuzzleSocketName = "b_gun_muzzleflash";
-	LineTraceDistance = 5000;
-	WeaponFireRate = 600;
+	
+	LineTraceDistance = 0;
+	WeaponFireRate = 0;
 	bIsAutomaticModeOn = false;
-	WeaponDamage = 20.0f;
+	WeaponDamage = 0.0f;
 	PitchRecoil = 0.0f;
 	YawRecoil = 0.0f;
 }
@@ -40,6 +53,25 @@ void APlayerWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	RemainBulletInMag=GetMaximumMagazine();
+}
+
+void APlayerWeapon::Interact(UObject* InteractedObject)
+{
+	IInterface_InteractableItem::Interact(InteractedObject);
+	
+	if(IsValid(Cast<APlayerCharacter>(InteractedObject)) && Owner == nullptr)
+	{
+		SetWeaponOwner(Cast<APlayerCharacter>(InteractedObject));
+		if(Owner)
+		{
+			Owner->PrepareControlledWeapon(this);
+		}
+	}
+}
+
+void APlayerWeapon::SetWeaponOwner(APlayerCharacter* NewOwner)
+{
+	Owner = NewOwner;
 }
 
 float APlayerWeapon::GetLineTraceDistance()
@@ -70,6 +102,11 @@ uint8 APlayerWeapon::GetRemainBulletInMag()
 void APlayerWeapon::SetRemainingBulletInMag(uint8 NewRemainingBulletInMag)
 {
 	RemainBulletInMag = NewRemainingBulletInMag;
+}
+
+FString APlayerWeapon::GetItemName()
+{
+	return SetWeaponName;
 }
 
 void APlayerWeapon::Fire_VFX()
@@ -141,7 +178,10 @@ float APlayerWeapon::GetWeaponDamage()
 USkeletalMeshComponent* APlayerWeapon::GetWeaponMesh()
 {
 	if(SkeletalMeshComp)
-	{return SkeletalMeshComp;}
+	{
+		return SkeletalMeshComp;
+	}
+	
 	return nullptr;
 }
 

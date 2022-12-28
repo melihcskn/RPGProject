@@ -30,6 +30,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* AmmoText;
 
+	UPROPERTY(meta =(BindWidget))
+	UTextBlock* InteractionText;
+
 public:
 
 	void SetInitials();
@@ -39,6 +42,8 @@ public:
 	void SetAmmo(int32 ReaminingBulletInMag, int32 MaxMagSize);
 
 	void SetAmmoTextHidden();
+
+	void SetInteractionTextVisibility(ESlateVisibility VisibilityOption, FString StringToSet);
 
 	void SetQuest();
 	

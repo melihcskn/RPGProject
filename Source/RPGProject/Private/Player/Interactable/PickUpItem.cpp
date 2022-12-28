@@ -3,6 +3,8 @@
 
 #include "Player/Interactable/PickUpItem.h"
 #include "Components/SphereComponent.h"
+#include "Player/PlayerCharacter/PlayerCharacter.h"
+#include "Player/PlayerCharacter/Components/PlayerInventory.h"
 
 // Sets default values
 APickUpItem::APickUpItem()
@@ -17,21 +19,27 @@ APickUpItem::APickUpItem()
 	OverlapComponent->SetupAttachment(RootComponent);
 }
 
+void APickUpItem::Interact(UObject* InteractedObject)
+{
+	IInterface_InteractableItem::Interact(InteractedObject);
+
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(InteractedObject);
+	if(IsValid(PlayerCharacter) && IsValid(PlayerCharacter->GetInventoryComponent()))
+	{
+		PlayerCharacter->AddItemToPlayerInventory(ItemID);
+		Destroy();
+	}
+}
+
+FString APickUpItem::GetItemName()
+{
+	return ItemName.ToString();
+}
+
 // Called when the game starts or when spawned
 void APickUpItem::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
-
-UTexture2D* APickUpItem::GetPickUpItemTexture()
-{
-	return ItemPicture;
-}
-
-FString APickUpItem::GetPickUpItemName()
-{
-	return SetPickupItemName;
-}
-
 
