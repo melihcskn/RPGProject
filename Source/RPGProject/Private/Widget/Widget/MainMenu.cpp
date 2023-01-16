@@ -18,9 +18,9 @@
 void UMainMenu::NativeConstruct()
 {
 
-	MenuItems.Push(StartGameButton);
-	MenuItems.Push(OptionsButton);
-	MenuItems.Push(QuitButton);
+	WidgetItems.Push(StartGameButton);
+	WidgetItems.Push(OptionsButton);
+	WidgetItems.Push(QuitButton);
 	
 	Super::NativeConstruct();
 
@@ -33,22 +33,20 @@ void UMainMenu::NativeConstruct()
 
 	if(UGameplayStatics::IsGamePaused(this))
 	{
-		Cast<UMainMenu_BaseButton>(MenuItems[0])->ItemButton->OnClicked.AddDynamic(this,&UMainMenu::UMainMenu::ResumeGame);
-		Cast<UMainMenu_BaseButton>(MenuItems[0])->ItemText->SetText(FText::FromString("Resume Game"));
+		Cast<UMainMenu_BaseButton>(WidgetItems[0])->ItemButton->OnClicked.AddDynamic(this,&UMainMenu::UMainMenu::ResumeGame);
+		Cast<UMainMenu_BaseButton>(WidgetItems[0])->ItemText->SetText(FText::FromString("Resume Game"));
 	}
 	else
 	{
-		Cast<UMainMenu_BaseButton>(MenuItems[0])->ItemButton->OnClicked.AddDynamic(this,&UMainMenu::UMainMenu::StartGame);
-		Cast<UMainMenu_BaseButton>(MenuItems[0])->ItemText->SetText(FText::FromString("Start Game"));
+		Cast<UMainMenu_BaseButton>(WidgetItems[0])->ItemButton->OnClicked.AddDynamic(this,&UMainMenu::UMainMenu::StartGame);
+		Cast<UMainMenu_BaseButton>(WidgetItems[0])->ItemText->SetText(FText::FromString("Start Game"));
 	}
 
-	Cast<UMainMenu_BaseButton>(MenuItems[1])->ItemButton->OnClicked.AddDynamic(this,&UMainMenu::UMainMenu::OpenOptions);
-	Cast<UMainMenu_BaseButton>(MenuItems[2])->ItemButton->OnClicked.AddDynamic(this,&UMainMenu::UMainMenu::QuitGame);
+	Cast<UMainMenu_BaseButton>(WidgetItems[1])->ItemButton->OnClicked.AddDynamic(this,&UMainMenu::UMainMenu::OpenOptions);
+	Cast<UMainMenu_BaseButton>(WidgetItems[2])->ItemButton->OnClicked.AddDynamic(this,&UMainMenu::UMainMenu::QuitGame);
 	
-	Cast<UMainMenu_BaseButton>(MenuItems[1])->ItemText->SetText(FText::FromString("Options"));
-	Cast<UMainMenu_BaseButton>(MenuItems[2])->ItemText->SetText(FText::FromString("Quit Game"));
-
-	SetFocusOptions();
+	Cast<UMainMenu_BaseButton>(WidgetItems[1])->ItemText->SetText(FText::FromString("Options"));
+	Cast<UMainMenu_BaseButton>(WidgetItems[2])->ItemText->SetText(FText::FromString("Quit Game"));
 	
 }
 
@@ -57,6 +55,7 @@ void UMainMenu::StartGame()
 {
 	GI->bIsGameStarted = true;
 	GI->SetGameState(EGameState::Game);
+	PC->SetInputMode(FInputModeGameOnly());
 	RemoveFromParent();
 }
 

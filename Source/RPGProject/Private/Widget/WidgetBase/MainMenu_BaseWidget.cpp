@@ -17,21 +17,10 @@ void UMainMenu_BaseWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	bIsFocusable = true;
-	SetFocus();
-	SelectedItemIndex = 0;
 	//Pre casting
 	GI = Cast<UMyGameInstance>(GetWorld()->GetGameInstance());
 	PC = Cast<AWidgetPlayerController>(UGameplayStatics::GetPlayerController(this,0));
 	MyHud = Cast<APlayerHUD>(PC->GetHUD());
-	
-	if(MyHud)
-	{
-			MyHud->CurrentWidget = this;
-			MyHud->WidgetHistory.Push(this);
-	}
-	
-	Navigate_UpDown(false);
 }
 
 FReply UMainMenu_BaseWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
@@ -99,61 +88,5 @@ void UMainMenu_BaseWidget::CheckPressedKeyBehaviour(FKey PressedKey)
 			MyHud->RemoveWidget();
 		}
 	}
-}
-
-//Set focus to selected widget, without any intervention, mouse click etc.
-void UMainMenu_BaseWidget::SetFocusOptions()
-{
-	if(PC)
-	{
-		PC->SetInputMode(FInputModeGameOnly());
-		PC->bShowMouseCursor = false;
-		SetKeyboardFocus();
-	}
-}
-
-//Change selected item
-void UMainMenu_BaseWidget::Navigate_UpDown(bool bDirection)
-{
-	if(bDirection && MenuItems.IsValidIndex(SelectedItemIndex + 1))
-	{
-		IMenuItemsInterface* MI = Cast<IMenuItemsInterface>(MenuItems[SelectedItemIndex]);
-		if(MI)
-		{
-			MI->UnSelect();
-		}
-		++SelectedItemIndex;
-		MI = Cast<IMenuItemsInterface>(MenuItems[SelectedItemIndex]);
-		if(MI)
-		{
-			MI->SetSelected();
-		}
-		SelectedWidget = MenuItems[SelectedItemIndex];
-	}
-	else if (!bDirection && MenuItems.IsValidIndex(SelectedItemIndex-1))
-	{
-		IMenuItemsInterface* MI = Cast<IMenuItemsInterface>(MenuItems[SelectedItemIndex]);
-		if(MI)
-		{
-			MI->UnSelect();
-		}
-		--SelectedItemIndex;
-		MI = Cast<IMenuItemsInterface>(MenuItems[SelectedItemIndex]);
-		if(MI)
-		{
-			MI->SetSelected();
-		}
-		SelectedWidget = MenuItems[SelectedItemIndex];
-	}
-	else if(!bDirection && MenuItems.Num()!=0)
-	{
-		IMenuItemsInterface* MI = Cast<IMenuItemsInterface>(MenuItems[SelectedItemIndex]);
-		if(MI)
-		{
-			MI->SetSelected();
-		}
-		SelectedWidget = MenuItems[SelectedItemIndex];
-	}
-
 }
 

@@ -9,9 +9,9 @@
 
 void UMainMenuSoundOptions::NativeConstruct()
 {
-	MenuItems.Push(MasterVolume);
-	MenuItems.Push(EffectVolume);
-	MenuItems.Push(MusicVolume);
+	WidgetItems.Push(MasterVolume);
+	WidgetItems.Push(EffectVolume);
+	WidgetItems.Push(MusicVolume);
 	
 	Super::NativeConstruct();
 
@@ -19,13 +19,13 @@ void UMainMenuSoundOptions::NativeConstruct()
 	EffectVolume = Cast<UMainMenu_BaseSlider>(CreateWidget(this,MyHud->SoundSliderClass));
 	MusicVolume = Cast<UMainMenu_BaseSlider>(CreateWidget(this,MyHud->SoundSliderClass));
 
-	Cast<UMainMenu_BaseSlider>(MenuItems[0])->SliderText->SetText(FText::FromString("Master Volume"));
-	Cast<UMainMenu_BaseSlider>(MenuItems[1])->SliderText->SetText(FText::FromString("Effect Volume"));
-	Cast<UMainMenu_BaseSlider>(MenuItems[2])->SliderText->SetText(FText::FromString("Music Volume"));
+	Cast<UMainMenu_BaseSlider>(WidgetItems[0])->SliderText->SetText(FText::FromString("Master Volume"));
+	Cast<UMainMenu_BaseSlider>(WidgetItems[1])->SliderText->SetText(FText::FromString("Effect Volume"));
+	Cast<UMainMenu_BaseSlider>(WidgetItems[2])->SliderText->SetText(FText::FromString("Music Volume"));
 
-	Cast<UMainMenu_BaseSlider>(MenuItems[0])->VolumeSLider->OnValueChanged.AddDynamic(this,&UMainMenuSoundOptions::SetMasterSound);
-	Cast<UMainMenu_BaseSlider>(MenuItems[1])->VolumeSLider->OnValueChanged.AddDynamic(this,&UMainMenuSoundOptions::SetEffectSound);
-	Cast<UMainMenu_BaseSlider>(MenuItems[2])->VolumeSLider->OnValueChanged.AddDynamic(this,&UMainMenuSoundOptions::SetMusicSound);
+	Cast<UMainMenu_BaseSlider>(WidgetItems[0])->VolumeSLider->OnValueChanged.AddDynamic(this,&UMainMenuSoundOptions::SetMasterSound);
+	Cast<UMainMenu_BaseSlider>(WidgetItems[1])->VolumeSLider->OnValueChanged.AddDynamic(this,&UMainMenuSoundOptions::SetEffectSound);
+	Cast<UMainMenu_BaseSlider>(WidgetItems[2])->VolumeSLider->OnValueChanged.AddDynamic(this,&UMainMenuSoundOptions::SetMusicSound);
 
 	SetFocusOptions();
 }

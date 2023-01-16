@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "WidgetBase.h"
 #include "Blueprint/UserWidget.h"
 #include "MainMenu_BaseWidget.generated.h"
 
@@ -16,7 +17,7 @@ class AWidgetPlayerController;
  * 
  */
 UCLASS()
-class RPGPROJECT_API UMainMenu_BaseWidget : public UUserWidget
+class RPGPROJECT_API UMainMenu_BaseWidget : public UWidgetBase
 {
 	GENERATED_BODY()
 
@@ -27,23 +28,11 @@ protected:
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 	void CheckPressedKeyBehaviour(FKey PressedKey);
-
+	
 	UMyGameInstance* GI;
-
-	uint8 SelectedItemIndex;
 
 	APlayerHUD* MyHud;
 
 	AWidgetPlayerController* PC;
-
-public:
-
-	void SetFocusOptions();
-	
-	TArray<UUserWidget*> MenuItems;
-
-	UUserWidget* SelectedWidget;
-	
-	virtual void Navigate_UpDown(bool bDirection);
 	
 };

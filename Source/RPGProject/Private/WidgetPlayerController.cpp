@@ -7,6 +7,7 @@
 #include "Widget/WidgetInterface/MenuItemsInterface.h"
 #include "Widget/WidgetInterface/MenuSwitchableItemInterface.h"
 #include "MyGameInstance.h"
+#include "Player/PlayerCharacter/PlayerCharacter.h"
 #include "Player/PlayerCharacter/PlayerHUD.h"
 
 void AWidgetPlayerController::BeginPlay()
@@ -27,6 +28,40 @@ void AWidgetPlayerController::BeginPlay()
 void AWidgetPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
+
+	InputComponent->BindAction("Inventory",IE_Pressed,this,&AWidgetPlayerController::OpenInventory);
+}
+
+void AWidgetPlayerController::OpenInventory()
+{
+	if(GetPawn())
+	{
+		PossessedPawn = Cast<APlayerCharacter>(GetPawn());
+	}
+	else if(!PossessedPawn)
+	{
+		return;
+	}
+	if(MyHud->PlayerInventoryWidgetClass && !CurrentWidget )
+	{
+		UUserWidget* PlayerInventoryWidget = Cast<UUserWidget>(CreateWidget(this,MyHud->PlayerInventoryWidgetClass));
+		if(PlayerInventoryWidget)
+		{
+			PlayerInventoryWidget->AddToViewport();
+			CurrentWidget = PlayerInventoryWidget;
+			SetShowMouseCursor(true);
+			SetInputMode(FInputModeGameAndUI());
+		}
+		// UnPossess();
+	}
+	else if(CurrentWidget->GetClass() == MyHud->PlayerInventoryWidgetClass)
+	{
+		// Possess(PossessedPawn);
+		CurrentWidget->RemoveFromViewport();
+		CurrentWidget = nullptr;
+		SetShowMouseCursor(false);
+		SetInputMode(FInputModeGameOnly());
+	}
 }
 
 void AWidgetPlayerController::NavigateRight()

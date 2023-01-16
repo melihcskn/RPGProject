@@ -7,7 +7,7 @@
 #include "Components/ActorComponent.h"
 #include "PlayerInventory.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemRemove);
+DECLARE_MULTICAST_DELEGATE(FOnInventoryChange);
 
 class APlayerCharacter;
 
@@ -25,9 +25,7 @@ protected:
 
 	TArray<FItem> InventoryItems;
 
-	float PlayerCoin;
-
-	float MaxPlayerCoin;
+	float PlayerCoin, MaxPlayerCoin, MaxInventoryItem, CurrentNumberOfItems;
 
 	APlayerCharacter* MyOwner;
 	
@@ -42,16 +40,19 @@ public:
 
 	void AddCoin(float CoinAmountToAdd);
 
+	float GetItemNumber();
+
 	int32 ItemIndexFinder(FName ItemIDToFind, bool& IsItemFound);
+
+	float GetMaxInventoryItem();
+
+	float GetPlayerCoin();
+	
+	FOnInventoryChange OnInventoryChange;
 
 	UFUNCTION(BlueprintCallable)
 	TArray<FItem> GetInventoryItems();
-
-	float GetPlayerCoin();
-
-	UPROPERTY()
-	FOnItemRemove OnItemRemove;
-
+	
 	UFUNCTION(BlueprintCallable)
     void RemoveItem(FName ItemIDToRemove, int32 Quantity);
 };

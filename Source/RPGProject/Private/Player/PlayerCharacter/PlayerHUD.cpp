@@ -13,21 +13,8 @@
 #include "Player/PlayerCharacter/Weapon/PlayerWeapon.h"
 #include "Widget/Widget/MainMenu.h"
 #include "Widget/Widget/PlayerHUDWidget.h"
-
-// void APlayerHUD::DrawHUD()
-// {
-// 	Super::DrawHUD();
-//
-// 	if (CrosshairTexture)
-// 	{
-// 		FVector2D Center(Canvas->ClipX * 0.5f, Canvas->ClipY * 0.5f);
-//
-// 		FVector2D CrossHairDrawPosition(Center.X - (CrosshairTexture->GetSurfaceWidth() * 0.5f), Center.Y - (CrosshairTexture->GetSurfaceHeight() * 0.5f));
-// 		
-// 		FCanvasTileItem TileItem(CrossHairDrawPosition, CrosshairTexture->Resource, FLinearColor::White);
-// 		TileItem.BlendMode = SE_BLEND_Translucent;
-// 		Canvas->DrawItem(TileItem);
-// 	}
+#include "Widget/Widget/PlayerInventoryWidget.h"
+#include "Widget/WidgetBase/WidgetBase.h"
 
 void APlayerHUD::BeginPlay()
 {
@@ -43,7 +30,7 @@ void APlayerHUD::BeginPlay()
 	}
 	
 	if(OwnerInventory)
-		OwnerInventory->OnItemRemove.AddDynamic(this,&APlayerHUD::RefeshOnItemChange);
+		OwnerInventory->OnInventoryChange.AddUObject(this,&APlayerHUD::RefeshOnItemChange);
 
 	if(OwnerHealth)
 		OwnerHealth->OnActorDamaged.AddDynamic(this,&APlayerHUD::RefreshOnHealthChange);
@@ -79,6 +66,23 @@ void APlayerHUD::SetHealth()
 	}
 }
 
+//Drop selected item
+void APlayerHUD::DropItem(FName ItemID,int32 ItemQuantity)
+{
+	Owner->DropItemFromPlayerInventory(ItemID,ItemQuantity);
+}
+
+//When PlayerHUD gets 
+void APlayerHUD::OnItemDropDetect(FName ItemID)
+{
+	if(UPlayerInventoryWidget* IW = Cast<UPlayerInventoryWidget>(CurrentWidget))
+	{
+		IW->OnItemDrop.BindUObject(this,&APlayerHUD::DropItem);
+		IW->OpenItemDropPopUp(ItemID);
+	}
+}
+
+//Refresh the Hud when player health change
 void APlayerHUD::RefreshOnHealthChange(float Damage)
 {
 	if(PlayerHUD)
@@ -99,10 +103,14 @@ void APlayerHUD::RefeshOnItemChange()
 		{
 			PlayerHUD->SetAmmo(OwnerWeapon->GetRemainBulletInMag(),OwnerWeapon->GetMaximumMagazine());
 		}
-		
+		if(UPlayerInventoryWidget* IW = Cast<UPlayerInventoryWidget>(CurrentWidget))
+		{
+			IW->RefreshInventory();
+		}
 	}
 }
 
+//Refresh HUD when player changes or equip weapon
 void APlayerHUD::RefreshOnWeaponChange(bool bIsEquipped, APlayerWeapon* PlayerWeapon)
 {
 	if(bIsEquipped)
@@ -114,7 +122,7 @@ void APlayerHUD::RefreshOnWeaponChange(bool bIsEquipped, APlayerWeapon* PlayerWe
 	else
 	{
 		//Hide if player drops or unequip weapon
-		PlayerHUD->SetAmmoTextHidden();
+		PlayerHUD->SetAmmo(0,0);
 	}
 }
 
@@ -134,8 +142,10 @@ void APlayerHUD::RefreshOnGameStateChange(TEnumAsByte<EGameState> State)
 				PlayerHUD = Cast<UPlayerHUDWidget>(CreateWidget(GetWorld()->GetFirstPlayerController(),PlayerHUDWidgetClass));
 				if(PlayerHUD)
 				{
+					PlayerHUD->OnItemDrop.BindUObject(this,&APlayerHUD::OnItemDropDetect);
 					PlayerHUD->SetInitials();
 					PlayerHUD->AddToViewport();
+					RefeshOnItemChange();
 				}
 			}
 		}
@@ -147,6 +157,7 @@ void APlayerHUD::RefreshOnGameStateChange(TEnumAsByte<EGameState> State)
 	}
 }
 
+//Set interaction message
 void APlayerHUD::SetInteract(ESlateVisibility VisibilityOption, FString ItemName)
 {
 	if(PlayerHUD && VisibilityOption == ESlateVisibility::Visible)
@@ -158,6 +169,7 @@ void APlayerHUD::SetInteract(ESlateVisibility VisibilityOption, FString ItemName
 	}
 }
 
+//Set interaction message visibility
 void APlayerHUD::SetInteract(ESlateVisibility VisibilityOption)
 {
 	if(PlayerHUD)
@@ -166,6 +178,7 @@ void APlayerHUD::SetInteract(ESlateVisibility VisibilityOption)
 	}
 }
 
+//Remove current widget
 void APlayerHUD::RemoveWidget()
 {
 	if(WidgetHistory.Num()-1>0)
@@ -173,8 +186,16 @@ void APlayerHUD::RemoveWidget()
 		WidgetHistory.Last()->RemoveFromParent();
 		WidgetHistory.Last()->Destruct();
 		WidgetHistory.Pop();
-		CurrentWidget = WidgetHistory.Last();
+		CurrentWidget = Cast<UWidgetBase>(WidgetHistory.Last());
 		CurrentWidget->SetFocusOptions();
 		CurrentWidget->SetKeyboardFocus();
 	}
+}
+
+//Add new widget to WidgetHistory
+void APlayerHUD::AddWidget(UUserWidget* WidgetToAdd)
+{
+	WidgetHistory.Push(WidgetToAdd);
+	CurrentWidget = Cast<UWidgetBase>(WidgetToAdd);
+	CurrentWidget->SetFocusOptions();
 }

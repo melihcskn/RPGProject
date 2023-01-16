@@ -270,6 +270,8 @@ public:
 
 	void AddItemToPlayerInventory(FName ItemID, int32 QuantityToAdd);
 
+	void DropItemFromPlayerInventory(FName ItemID, int32 QuantityToDrop);
+
 	UPROPERTY()
 	FOnWeaponEquipped OnWeaponEquipped;
 
@@ -292,10 +294,8 @@ public:
 		void OnOverlapEnd(AActor* OverlappedActor, AActor* OtherActor);
 
 	//Get&Set
-
+	
 	void SetPlayerInputs();
-
-	int32 GetPlayerCoin();
 
 	UFUNCTION(BlueprintCallable)
 		uint8 GetWeaponAmmo();

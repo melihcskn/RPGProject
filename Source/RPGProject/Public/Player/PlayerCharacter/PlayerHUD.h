@@ -7,6 +7,7 @@
 #include "GameFramework/HUD.h"
 #include "PlayerHUD.generated.h"
 
+class UWidgetBase;
 class UMyGameInstance;
 class UMainMenu_BaseWidget;
 class UProgressBar;
@@ -51,6 +52,10 @@ protected:
 
 	void SetHealth();
 
+	void DropItem(FName ItemID,int32 ItemQuantity);
+
+	void OnItemDropDetect(FName ItemID);
+
 	UFUNCTION()
 	void RefreshOnHealthChange(float Damage);
 
@@ -66,17 +71,17 @@ protected:
 
 public:
 
-	// virtual void DrawHUD() override;
+	UWidgetBase* CurrentWidget;
 
-	UMainMenu_BaseWidget* CurrentWidget;
-
-	TArray<UMainMenu_BaseWidget*> WidgetHistory;
+	TArray<UUserWidget*> WidgetHistory;
 
 	void SetInteract(ESlateVisibility VisibilityOption, FString ItemName);
 
 	void SetInteract(ESlateVisibility VisibilityOption);
 	
 	void RemoveWidget();
+
+	void AddWidget(UUserWidget* WidgetToAdd);
 	
 	static FVector2D CrossHairDot;
 
@@ -109,4 +114,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> PlayerHUDWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> PlayerInventoryWidgetClass;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> PlayerInventoryItemWidgetClass;
 };

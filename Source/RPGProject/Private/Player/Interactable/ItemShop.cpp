@@ -64,11 +64,6 @@ void AItemShop::ItemShop_OverlapEnd(UPrimitiveComponent* OverlappedComponent, AA
 void AItemShop::TakeCoinFromPlayer(int32 ItemPrice,FString ItemName, UTexture2D* ItemTexture,int32 ItemQuantity)
 {
 	
-	if((OverlappedActor->GetPlayerCoin() - ItemPrice)>=0 && OverlappedActor)
-	{
-
-	}
-	else{ItemShopWarning();}
 }
 
 

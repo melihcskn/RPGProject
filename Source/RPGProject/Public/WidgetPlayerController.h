@@ -8,7 +8,7 @@
 
 class UMyGameInstance;
 class APlayerHUD;
-class APlayerHUD;
+class APlayerCharacter;
 
 /**
  * 
@@ -23,10 +23,18 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void SetupInputComponent() override;
-
+	
 	UMyGameInstance* GI;
 
 	APlayerHUD* MyHud;
+
+	UUserWidget* CurrentWidget;
+
+	APlayerCharacter* PossessedPawn;
+
+	UFUNCTION()
+	void OpenInventory();
+
 
 public:
 

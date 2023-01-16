@@ -17,6 +17,10 @@ APickUpItem::APickUpItem()
 
 	OverlapComponent = CreateDefaultSubobject<USphereComponent>(TEXT("OverlapComp"));
 	OverlapComponent->SetupAttachment(RootComponent);
+
+	StaticMeshComp->SetSimulatePhysics(true);
+	StaticMeshComp->SetCollisionProfileName("PickUpItem");
+	OverlapComponent->SetCollisionProfileName("PickUpItem");
 }
 
 void APickUpItem::Interact(UObject* InteractedObject)
@@ -26,7 +30,14 @@ void APickUpItem::Interact(UObject* InteractedObject)
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(InteractedObject);
 	if(IsValid(PlayerCharacter) && IsValid(PlayerCharacter->GetInventoryComponent()))
 	{
-		PlayerCharacter->AddItemToPlayerInventory(ItemID);
+		if(ItemQuantity!=0)
+		{
+			PlayerCharacter->AddItemToPlayerInventory(ItemID,ItemQuantity);
+		}
+		else
+		{
+			PlayerCharacter->AddItemToPlayerInventory(ItemID);
+		}
 		Destroy();
 	}
 }
@@ -36,6 +47,21 @@ FString APickUpItem::GetItemName()
 	return ItemName.ToString();
 }
 
+void APickUpItem::AddQuantity(float QuantityToAdd)
+{
+	ItemQuantity += QuantityToAdd;
+}
+
+void APickUpItem::SetQuantity(float QuantityToSet)
+{
+	ItemQuantity = QuantityToSet;
+}
+
+float APickUpItem::GetQuantity()
+{
+	return ItemQuantity;
+}
+
 // Called when the game starts or when spawned
 void APickUpItem::BeginPlay()
 {
@@ -43,3 +69,19 @@ void APickUpItem::BeginPlay()
 	
 }
 
+void APickUpItem::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorBeginOverlap(OtherActor);
+	//Check if other actor is also pickupitem
+	if(Cast<APickUpItem>(OtherActor))
+	{
+		//Check if this actor is moving
+		if(GetVelocity().Size()>0.0f)
+		{
+			//If this actor is moving, probably this is the new one.
+			//So add this items quantity to old one and destroy this
+			Cast<APickUpItem>(OtherActor)->AddQuantity(ItemQuantity);
+			Destroy();
+		}
+	}
+}

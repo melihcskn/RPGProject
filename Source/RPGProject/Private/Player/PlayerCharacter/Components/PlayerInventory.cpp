@@ -8,6 +8,7 @@
 UPlayerInventory::UPlayerInventory()
 {
 	MyOwner = Cast<APlayerCharacter>(GetOwner());
+	MaxInventoryItem = 16;
 }
 
 
@@ -16,6 +17,7 @@ void UPlayerInventory::BeginPlay()
 {
 	Super::BeginPlay();
 
+	CurrentNumberOfItems = InventoryItems.Num();
 	MaxPlayerCoin = 999999999.0f;
 }
 
@@ -40,13 +42,27 @@ void UPlayerInventory::AddItem(FItem ItemToAdd)
 	}
 	else
 	{
-		InventoryItems.Add(ItemToAdd);
+		if(CurrentNumberOfItems != MaxInventoryItem)
+		{
+			InventoryItems.Add(ItemToAdd);
+			++CurrentNumberOfItems;
+			OnInventoryChange.Broadcast();
+		}
+		else
+		{
+			//TODO pop inventory is full message
+		}
 	}
 }
 
 void UPlayerInventory::AddCoin(float CoinAmountToAdd)
 {
 	PlayerCoin = FMath::Clamp(PlayerCoin+CoinAmountToAdd,0.0f,MaxPlayerCoin);
+}
+
+float UPlayerInventory::GetItemNumber()
+{
+	return CurrentNumberOfItems;
 }
 
 int32 UPlayerInventory::ItemIndexFinder(FName ItemIDToFind,bool& IsItemFound)
@@ -64,6 +80,11 @@ int32 UPlayerInventory::ItemIndexFinder(FName ItemIDToFind,bool& IsItemFound)
 	return 0;
 }
 
+float UPlayerInventory::GetMaxInventoryItem()
+{
+	return MaxInventoryItem;
+}
+
 void UPlayerInventory::RemoveItem(FName ItemIDToRemove, int32 Quantity)
 {
 	bool bIsItemFound;
@@ -75,8 +96,9 @@ void UPlayerInventory::RemoveItem(FName ItemIDToRemove, int32 Quantity)
 		if(InventoryItems[ItemIndex].ItemQuantity == 0)
 		{
 			InventoryItems.RemoveAt(ItemIndex);
-			OnItemRemove.Broadcast();
+			--CurrentNumberOfItems;
 		}
+		OnInventoryChange.Broadcast();
 	}
 	else
 	{

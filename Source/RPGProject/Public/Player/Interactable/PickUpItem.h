@@ -23,15 +23,26 @@ public:
 
 	virtual FString GetItemName() override;
 
+	void AddQuantity(float QuantityToAdd);
+
+	void SetQuantity(float QuantityToSet);
+
+	float GetQuantity();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Item ID")
 	FName ItemID;
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Item ID")
 	FName ItemName;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Item Quantity")
+	float ItemQuantity;
 
 	UPROPERTY(EditDefaultsOnly,Category="Components")
 		UStaticMeshComponent* StaticMeshComp;

@@ -309,13 +309,14 @@ void APlayerCharacter::StopFire()
 void APlayerCharacter::Fire()
 {
 	//Check if player is reloading && Stop fire if mag is empty
-	if (ControlledWeapon && (PlayerState!=EPlayerState::Reloading) && ControlledWeapon->GetRemainBulletInMag() > 0 )
+	if (ControlledWeapon && (PlayerState!=Reloading) && ControlledWeapon->GetRemainBulletInMag() > 0 )
 	{
 		RecoilCurve = FMath::Clamp(RecoilCurve*2,0.0f,1.6f);
 		ControlledWeapon->SetRemainingBulletInMag(ControlledWeapon->GetRemainBulletInMag() - 1);
 		OnCharacterFired.Broadcast();
 		ControlledWeapon->Fire_VFX();
 		ControlledWeapon->PlayFireSound();
+		PlayFireAnim();
 		UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), 1.0f, this, 0.0f, "Noise");
 		GetWorld()->GetFirstPlayerController()->PlayerCameraManager->StartCameraShake(FireCamShake,0.5f);
 		if (PlayerWeapon_LineTrace())
@@ -489,11 +490,11 @@ void APlayerCharacter::PlayFireAnim()
 {
 	if(bIsAiming)
 	{
-		PlayAnimMontage(AimFire_Montage);
+		PlayAnimMontage(AimFire_Montage,0.8f);
 	}
 	else
 	{
-		PlayAnimMontage(HipFire_Montage);
+		PlayAnimMontage(HipFire_Montage,0.75f);
 	}
 }
 
@@ -582,6 +583,8 @@ void APlayerCharacter::OnOverlapEnd(AActor* OverlappedActor, AActor* OtherActor)
 	MyPlayerHUD->SetInteract(ESlateVisibility::Hidden);
 }
 
+//Add item to player inventory
+//Use this method if quantity of item is set in item data asset
 void APlayerCharacter::AddItemToPlayerInventory(FName ItemID)
 {
 	AMyGameModeBase* MyGameModeBase;
@@ -596,6 +599,8 @@ void APlayerCharacter::AddItemToPlayerInventory(FName ItemID)
 	}
 }
 
+//Add item to player inventory
+//Use this method when quantity is different from default item data asset
 void APlayerCharacter::AddItemToPlayerInventory(FName ItemID, int32 QuantityToAdd)
 {
 	AMyGameModeBase* MyGameModeBase;
@@ -609,6 +614,26 @@ void APlayerCharacter::AddItemToPlayerInventory(FName ItemID, int32 QuantityToAd
 		{
 			TempItem.ItemQuantity = QuantityToAdd;
 			PlayerInventory->AddItem(TempItem);
+		}
+	}
+}
+
+//Drop inventory item
+void APlayerCharacter::DropItemFromPlayerInventory(FName ItemID, int32 QuantityToDrop)
+{
+	AMyGameModeBase* MyGameModeBase;
+	MyGameModeBase = Cast<AMyGameModeBase>(GetWorld()->GetAuthGameMode());
+	if(MyGameModeBase)
+	{
+		bool bIsItemFound = false;
+		FItem TempItem;
+		TempItem = MyGameModeBase->FindItem(ItemID,bIsItemFound);
+		if(bIsItemFound && PlayerInventory)
+		{
+			PlayerInventory->RemoveItem(ItemID,QuantityToDrop);
+			FVector ItemLoc = GetMesh()->GetBoneLocation("ik_foot_root");
+			APickUpItem* TempPickUpItem = Cast<APickUpItem>(GetWorld()->SpawnActor(TempItem.ItemClass,&ItemLoc));
+			TempPickUpItem->SetQuantity(QuantityToDrop);
 		}
 	}
 }
@@ -646,20 +671,13 @@ UClass* APlayerCharacter::GetWeaponClass()
 	{
 		return ControlledWeapon->GetClass();
 	}
-	else
-	{
-		return nullptr;
-	}
+
+	return nullptr;
 }
 
 void APlayerCharacter::DecreaseCoin(int32 DecreaseAmount)
 {
 	PlayerCoin = FMath::Clamp(PlayerCoin-DecreaseAmount,0,9999);
-}
-
-int32 APlayerCharacter::GetPlayerCoin()
-{
-	return PlayerCoin;
 }
 
 void APlayerCharacter::SaveGame()

@@ -10,9 +10,9 @@
 
 void UMainMenuOptions::NativeConstruct()
 {
-	MenuItems.Push(SoundButton);
-	MenuItems.Push(GraphicsButton);
-	MenuItems.Push(ControlsButton);
+	WidgetItems.Push(SoundButton);
+	WidgetItems.Push(GraphicsButton);
+	WidgetItems.Push(ControlsButton);
 	
 	Super::NativeConstruct();
 
@@ -20,13 +20,13 @@ void UMainMenuOptions::NativeConstruct()
 	GraphicsButton = Cast<UMainMenu_BaseButton>(CreateWidget(this,MyHud->MenuButtonClass));
 	ControlsButton = Cast<UMainMenu_BaseButton>(CreateWidget(this,MyHud->MenuButtonClass));
 
-	Cast<UMainMenu_BaseButton>(MenuItems[0])->ItemText->SetText(FText::FromString("Sound"));
-	Cast<UMainMenu_BaseButton>(MenuItems[1])->ItemText->SetText(FText::FromString("Graphics"));
-	Cast<UMainMenu_BaseButton>(MenuItems[2])->ItemText->SetText(FText::FromString("Controls"));
+	Cast<UMainMenu_BaseButton>(WidgetItems[0])->ItemText->SetText(FText::FromString("Sound"));
+	Cast<UMainMenu_BaseButton>(WidgetItems[1])->ItemText->SetText(FText::FromString("Graphics"));
+	Cast<UMainMenu_BaseButton>(WidgetItems[2])->ItemText->SetText(FText::FromString("Controls"));
 
-	Cast<UMainMenu_BaseButton>(MenuItems[0])->ItemButton->OnClicked.AddDynamic(this,&UMainMenuOptions::OpenSoundOptions);
-	Cast<UMainMenu_BaseButton>(MenuItems[1])->ItemButton->OnClicked.AddDynamic(this,&UMainMenuOptions::OpenGraphicsOption);
-	Cast<UMainMenu_BaseButton>(MenuItems[2])->ItemButton->OnClicked.AddDynamic(this,&UMainMenuOptions::OpenControlsOption);
+	Cast<UMainMenu_BaseButton>(WidgetItems[0])->ItemButton->OnClicked.AddDynamic(this,&UMainMenuOptions::OpenSoundOptions);
+	Cast<UMainMenu_BaseButton>(WidgetItems[1])->ItemButton->OnClicked.AddDynamic(this,&UMainMenuOptions::OpenGraphicsOption);
+	Cast<UMainMenu_BaseButton>(WidgetItems[2])->ItemButton->OnClicked.AddDynamic(this,&UMainMenuOptions::OpenControlsOption);
 
 	SetFocusOptions();
 }
