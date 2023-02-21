@@ -18,6 +18,7 @@ class UMyGameInstance;
 class APlayerHUD;
 class AWidgetPlayerController;
 struct FItem;
+struct FQuest;
 
 UENUM()
 enum EPlayerState
@@ -40,7 +41,7 @@ private:
 	// Sets default values for this character's properties
 	APlayerCharacter();
 
-	UInputComponent* PlayerInputComp;
+	TWeakObjectPtr<UInputComponent> PlayerInputComp;
 	
 protected:	
 	// Called when the game starts or when spawned
@@ -203,12 +204,6 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite)
 		bool IsJumped = false;
-	
-	UFUNCTION(BlueprintImplementableEvent)
-		void ShowInventory();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void PlayHitMarker();
 
 	//Components
 	
@@ -240,12 +235,6 @@ protected:
 		int32 GetCurrentAmmo();
 
 	UFUNCTION(BlueprintCallable)
-		void MainMenu();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void Interact();
-
-	UFUNCTION(BlueprintCallable)
 		void SaveGame();
 
 	UFUNCTION()
@@ -270,6 +259,12 @@ public:
 
 	void AddItemToPlayerInventory(FName ItemID, int32 QuantityToAdd);
 
+	void AddQuest(FName QuestID);
+
+	void FinishQuest(FName QuestID);
+
+	bool IsQuestTaken(FName QuestID);
+
 	void DropItemFromPlayerInventory(FName ItemID, int32 QuantityToDrop);
 
 	UPROPERTY()
@@ -277,9 +272,6 @@ public:
 
 	UPROPERTY()
 	FOnCharacterFired OnCharacterFired;
-
-	UPROPERTY(EditAnywhere,Category="Camera")
-	TSubclassOf<UMatineeCameraShake> FireCamShake;
 
 	UFUNCTION(BlueprintCallable)
 		void DisableMoving();
@@ -296,6 +288,14 @@ public:
 	//Get&Set
 	
 	void SetPlayerInputs();
+
+	void AddWidget(UUserWidget* WidgetToAdd);
+
+	TArray<FQuest> GetActiveQuests();
+
+	TArray<FQuest> GetFinishedQuests();
+
+	APlayerController* GetPlayerController();
 
 	UFUNCTION(BlueprintCallable)
 		uint8 GetWeaponAmmo();

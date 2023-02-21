@@ -3,8 +3,6 @@
 
 #include "Player/PlayerCharacter/PlayerCharacter.h"
 
-#include <memory>
-
 #include "DrawDebugHelpers.h"
 #include "AI/EnemyCharacter/EnemyCharacter.h"
 #include "MyGameInstance.h"
@@ -19,14 +17,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "Player/PlayerCharacter/Components/PlayerInventory.h"
 #include "WidgetPlayerController.h"
-#include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GenericPlatform/GenericApplication.h"
 #include "Perception/AISense_Hearing.h"
-#include "PhysicalMaterials/PhysicalMaterial.h"
-#include "Widget/Widget/MainMenu.h"
 #include "MyGameModeBase.h"
-#include "Widget/WidgetBase/MainMenu_BaseWidget.h"
+#include "Engine/DamageEvents.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -72,7 +66,7 @@ APlayerCharacter::APlayerCharacter()
 	//First person camera
 	ADSCameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("ADSCameraComp"));
 	ADSCameraComp->SetRelativeScale3D(FVector(0.1f));
-	ADSCameraComp->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepWorldTransform,EyeSocketName);
+	ADSCameraComp->SetupAttachment(GetMesh(),EyeSocketName);
 	ADSCameraComp->SetWorldRotation(GetMesh()->GetSocketRotation(EyeSocketName));
 	
 	//Player components
@@ -231,21 +225,6 @@ int32 APlayerCharacter::GetCurrentAmmo()
 	return 0;
 }
 
-//Open main menu
-void APlayerCharacter::MainMenu()
-{
-	if(MyPlayerHUD->MainMenuClass)
-	{
-		UMainMenu* BW = Cast<UMainMenu>(CreateWidget(PC,MyPlayerHUD->MainMenuClass));
-		if(BW)
-		{
-			//Pause the game until menu is closed
-			UGameplayStatics::SetGamePaused(this,true);
-			BW->AddToViewport();
-		}
-	}
-}
-
 void APlayerCharacter::MoveForward(float MovementSpeed)
 {
     if(CanMoveForward)
@@ -318,7 +297,6 @@ void APlayerCharacter::Fire()
 		ControlledWeapon->PlayFireSound();
 		PlayFireAnim();
 		UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), 1.0f, this, 0.0f, "Noise");
-		GetWorld()->GetFirstPlayerController()->PlayerCameraManager->StartCameraShake(FireCamShake,0.5f);
 		if (PlayerWeapon_LineTrace())
 		{
 			TWeakObjectPtr<AEnemyCharacter> AI = Cast<AEnemyCharacter>(WeaponLineTrace_HitResult.GetActor());
@@ -329,10 +307,8 @@ void APlayerCharacter::Fire()
 			if (AI.IsValid() && WeaponLineTrace_HitResult.GetActor()!=this)
 			{
 				ControlledWeapon->Impact_VFX(WeaponLineTrace_HitResult);//TODO add more surface
-				float EffectiveDamage;
-				EffectiveDamage = ControlledWeapon->GetWeaponDamage();
-				PlayHitMarker();
-				TWeakObjectPtr<AActor>(EnemyChar) = WeaponLineTrace_HitResult.Actor;
+				float EffectiveDamage = ControlledWeapon->GetWeaponDamage();
+				TWeakObjectPtr<AActor>(EnemyChar) = WeaponLineTrace_HitResult.GetActor();
 				/*if (WeaponLineTrace_HitResult.BoneName == "head")*///TODO add damage multiplier
 				EnemyChar->TakeDamage(EffectiveDamage, DmgEvent, GetController(), this);
 			}
@@ -476,7 +452,7 @@ bool APlayerCharacter::PlayerWeapon_LineTrace()
 		float HalfRad = FMath::DegreesToRadians(ControlledWeapon->GetWeaponSpreadRatio());
 		ShotDirection = FMath::VRandCone(ShotDirection, HalfRad, HalfRad);
 		FVector LineTraceEndVector = LineTraceStartLocation + (ShotDirection * ControlledWeapon->GetLineTraceDistance());
-		bool bIsLineTraceSucceed = GetWorld()->LineTraceSingleByChannel(WeaponLineTrace_HitResult,
+		bool const bIsLineTraceSucceed = GetWorld()->LineTraceSingleByChannel(WeaponLineTrace_HitResult,
 			LineTraceStartLocation,
 			LineTraceEndVector, ECollisionChannel::ECC_Pawn, QParams
 		);
@@ -587,13 +563,11 @@ void APlayerCharacter::OnOverlapEnd(AActor* OverlappedActor, AActor* OtherActor)
 //Use this method if quantity of item is set in item data asset
 void APlayerCharacter::AddItemToPlayerInventory(FName ItemID)
 {
-	AMyGameModeBase* MyGameModeBase;
-	MyGameModeBase = Cast<AMyGameModeBase>(GetWorld()->GetAuthGameMode());
+	AMyGameModeBase* MyGameModeBase = Cast<AMyGameModeBase>(GetWorld()->GetAuthGameMode());
 	if(MyGameModeBase)
 	{
 		bool bIsItemFound = false;
-		FItem TempItem;
-		TempItem = MyGameModeBase->FindItem(ItemID,bIsItemFound);
+		FItem TempItem = MyGameModeBase->FindItem(ItemID,bIsItemFound);
 		if(bIsItemFound && PlayerInventory)
 			PlayerInventory->AddItem(TempItem);
 	}
@@ -603,13 +577,11 @@ void APlayerCharacter::AddItemToPlayerInventory(FName ItemID)
 //Use this method when quantity is different from default item data asset
 void APlayerCharacter::AddItemToPlayerInventory(FName ItemID, int32 QuantityToAdd)
 {
-	AMyGameModeBase* MyGameModeBase;
-	MyGameModeBase = Cast<AMyGameModeBase>(GetWorld()->GetAuthGameMode());
+	AMyGameModeBase* MyGameModeBase = Cast<AMyGameModeBase>(GetWorld()->GetAuthGameMode());
 	if(MyGameModeBase)
 	{
 		bool bIsItemFound = false;
-		FItem TempItem;
-		TempItem = MyGameModeBase->FindItem(ItemID,bIsItemFound);
+		FItem TempItem = MyGameModeBase->FindItem(ItemID,bIsItemFound);
 		if(bIsItemFound && PlayerInventory)
 		{
 			TempItem.ItemQuantity = QuantityToAdd;
@@ -618,16 +590,40 @@ void APlayerCharacter::AddItemToPlayerInventory(FName ItemID, int32 QuantityToAd
 	}
 }
 
+void APlayerCharacter::AddQuest(FName QuestID)
+{
+	AMyGameModeBase* MyGameModeBase = Cast<AMyGameModeBase>(GetWorld()->GetAuthGameMode());
+	if(MyGameModeBase)
+	{
+		bool bIsQuestFound = false;
+		FQuest TempQuest = MyGameModeBase->FindQuest(QuestID,bIsQuestFound);
+		if(bIsQuestFound && PlayerQuests)
+		{
+			PlayerQuests->AddQuest(TempQuest);
+		}
+	}
+}
+
+void APlayerCharacter::FinishQuest(FName QuestID)
+{
+	PlayerQuests->FinishQuest(QuestID);
+}
+
+bool APlayerCharacter::IsQuestTaken(FName QuestID)
+{
+	bool bIsFound=false;
+	PlayerQuests->FindQuestIndex(QuestID, bIsFound);
+	return bIsFound;
+}
+
 //Drop inventory item
 void APlayerCharacter::DropItemFromPlayerInventory(FName ItemID, int32 QuantityToDrop)
 {
-	AMyGameModeBase* MyGameModeBase;
-	MyGameModeBase = Cast<AMyGameModeBase>(GetWorld()->GetAuthGameMode());
+	AMyGameModeBase* MyGameModeBase = Cast<AMyGameModeBase>(GetWorld()->GetAuthGameMode());;
 	if(MyGameModeBase)
 	{
 		bool bIsItemFound = false;
-		FItem TempItem;
-		TempItem = MyGameModeBase->FindItem(ItemID,bIsItemFound);
+		FItem TempItem = MyGameModeBase->FindItem(ItemID,bIsItemFound);
 		if(bIsItemFound && PlayerInventory)
 		{
 			PlayerInventory->RemoveItem(ItemID,QuantityToDrop);
@@ -640,7 +636,7 @@ void APlayerCharacter::DropItemFromPlayerInventory(FName ItemID, int32 QuantityT
 
 void APlayerCharacter::SetPlayerInputs()
 {
-	if(PlayerInputComp)
+	if(PlayerInputComp.IsValid())
 	{
 		PlayerInputComp->BindAxis("MoveForward", this, &APlayerCharacter::MoveForward);
 		PlayerInputComp->BindAxis("MoveBackward", this, &APlayerCharacter::MoveBackward);
@@ -659,10 +655,28 @@ void APlayerCharacter::SetPlayerInputs()
 		PlayerInputComp->BindAction("Reload", EInputEvent::IE_Pressed, this, &APlayerCharacter::Reload);
 		PlayerInputComp->BindAction("WeaponFireModeChange", EInputEvent::IE_Pressed, this, &APlayerCharacter::ChangeWeaponFireMode);
 		PlayerInputComp->BindAction("PickUp", EInputEvent::IE_Pressed, this, &APlayerCharacter::PickUp);
-		PlayerInputComp->BindAction("Inventory", EInputEvent::IE_Pressed, this, &APlayerCharacter::ShowInventory);
-		PlayerInputComp->BindAction("OpenMainMenu", EInputEvent::IE_Pressed, this, &APlayerCharacter::MainMenu);
 		PlayerInputComp->BindAction("SaveGame", EInputEvent::IE_Pressed, this, &APlayerCharacter::SaveGame);
 	}
+}
+
+void APlayerCharacter::AddWidget(UUserWidget* WidgetToAdd)
+{
+	MyPlayerHUD->AddWidget(WidgetToAdd);
+}
+
+TArray<FQuest> APlayerCharacter::GetActiveQuests()
+{
+	return PlayerQuests->GetActiveQuests();
+}
+
+TArray<FQuest> APlayerCharacter::GetFinishedQuests()
+{
+	return PlayerQuests->GetFinishedQuests();
+}
+
+APlayerController* APlayerCharacter::GetPlayerController()
+{
+	return Cast<APlayerController>(GetController());
 }
 
 UClass* APlayerCharacter::GetWeaponClass()

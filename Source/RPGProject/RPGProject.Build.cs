@@ -7,12 +7,12 @@ public class RPGProject : ModuleRules
 	public RPGProject(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-	
+
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore","UMG" });
 		
 		PrivateDependencyModuleNames.AddRange(new string[] {"AIModule", "GameplayTasks","NavigationSystem","PhysicsCore"});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore","Niagara" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore","Niagara","EnhancedInput" });
 		
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");

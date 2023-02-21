@@ -40,7 +40,12 @@ void UMainMenuControlOptions::Navigate_UpDown(bool bDirection)
 /*Setting up vertical box to show both action and axis mapping*/
 void UMainMenuControlOptions::PrepareVerticalBox()
 {
-	if(!GI || !MyHud){return;}
+	if(!GI || !MyHud)
+	{
+		return;
+	}
+
+	int32 ControlItemIndex = 0;
 	for(int i = 0 ; i<GI->InputSetting->GetActionMappings().Num();i++)
 	{
 		UMainMenu_BaseControls* BC = Cast<UMainMenu_BaseControls>(CreateWidget(this,MyHud->ControlItemClass));
@@ -48,9 +53,10 @@ void UMainMenuControlOptions::PrepareVerticalBox()
 		BC->GI = GI;
 		BC->ItemText->SetText(FText::FromString(GI->InputSetting->GetActionMappings()[i].ActionName.ToString()));
 		BC->KeyButtonText->SetText(FText::FromString(GI->InputSetting->GetActionMappings()[i].Key.ToString()));
-		BC->SetItem_Index_Type(i,0);
+		BC->SetItem_Index_Type(ControlItemIndex,0);
 		UVerticalBoxSlot* VBSlot = VB->AddChildToVerticalBox(BC);
 		WidgetItems.Push(Cast<UMainMenu_BaseControls>(VB->GetAllChildren().Last()));
+		ControlItemIndex++;
 	}
 	for(int i =0 ; i<GI->InputSetting->GetAxisMappings().Num();i++)
 	{
@@ -59,9 +65,10 @@ void UMainMenuControlOptions::PrepareVerticalBox()
 		BC->GI = GI;
 		BC->ItemText->SetText(FText::FromString(GI->InputSetting->GetAxisMappings()[i].AxisName.ToString()));
 		BC->KeyButtonText->SetText(FText::FromString(GI->InputSetting->GetAxisMappings()[i].Key.ToString()));
-		BC->SetItem_Index_Type(i,1);
+		BC->SetItem_Index_Type(ControlItemIndex,1);
 		UVerticalBoxSlot* VBSlot = VB->AddChildToVerticalBox(BC);
 		WidgetItems.Push(Cast<UMainMenu_BaseControls>(VB->GetAllChildren().Last()));
+		ControlItemIndex++;
 	}
 	SetFocusOptions();
 }

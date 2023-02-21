@@ -2,7 +2,7 @@
 
 
 #include "MyGameModeBase.h"
-
+#include "Player/Interactable/QuestDataAsset.h"
 #include "Player/Interactable/ItemDataAsset.h"
 
 FItem AMyGameModeBase::FindItem(FName ItemID,bool& IsItemFound)
@@ -19,4 +19,20 @@ FItem AMyGameModeBase::FindItem(FName ItemID,bool& IsItemFound)
 		}
 	}
 	return TempItem;
+}
+
+FQuest AMyGameModeBase::FindQuest(FName QuestID, bool& IsQuestFound)
+{
+	FQuest TempQuest = FQuest();
+	IsQuestFound = false;
+	if(!QuestDatabase) return TempQuest;
+	for(int i = 0; i<QuestDatabase->GetQuest().Num(); i++)
+	{
+		if(QuestDatabase->GetQuest()[i].QuestID == QuestID)
+		{
+			IsQuestFound = true;
+			return QuestDatabase->GetQuest()[i];
+		}
+	}
+	return TempQuest;
 }

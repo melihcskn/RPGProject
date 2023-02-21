@@ -4,79 +4,46 @@
 
 #include "CoreMinimal.h"
 
-#include "Player/PlayerCharacter/PlayerCharacter.h"
+#include "Player/Interactable/QuestDataAsset.h"
 #include "Components/ActorComponent.h"
 #include "PlayerQuests.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnQuestChange);
+
 class APlayerCharacter;
-
-USTRUCT(BlueprintType)
-struct FPlayerQuestsStruct
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Struct")
-		FString QuestName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Struct")
-		int32 QuestItemQuantity;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Struct")
-		FString QuestExplanation;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Struct")
-		FString QuestItem;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Struct")
-		UTexture2D* QuestItemImage;
-
-	FPlayerQuestsStruct()
-	{
-		QuestName = "test";
-		QuestItemQuantity = 0;
-		QuestExplanation = nullptr;
-		QuestItem = nullptr;
-		QuestItemImage=nullptr;
-	}
-
-	FPlayerQuestsStruct(FString QName, int32 ItemQuantity, FString QExplanation, FString QItem, UTexture2D* QItemImage)
-	{
-		QuestName = QName;
-		QuestItemQuantity = ItemQuantity;
-		QuestExplanation = QExplanation;
-		QuestItem = QItem;
-		QuestItemImage = QItemImage;
-	}
-};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RPGPROJECT_API UPlayerQuests : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+protected:	
 	// Sets default values for this component's properties
 	UPlayerQuests();
 
-protected:
-
 	APlayerCharacter* MyOwner;
+
+	APlayerCharacter* GetQuestOwner();
 	
-	UPROPERTY(BlueprintReadOnly)
-		TArray<FPlayerQuestsStruct> PlayerQuestList;
+	TArray<FQuest> ActiveQuestList;
 
-	UFUNCTION(BlueprintCallable)
-		void AddQuest(FString QName, int32 ItemQuantity, FString QExplanation, FString QItem, UTexture2D* QItemImage);
+	TArray<FQuest> FinishedQuestList;
 
-	UFUNCTION(BlueprintCallable)
-		void SetQuest(TArray<FPlayerQuestsStruct> QuestToSet);
+public:
 
-	UFUNCTION(BlueprintCallable)
-		bool IsQuestTaken(FString QuestNameToFind);
+	FOnQuestChange OnQuestChange;
 
-	UFUNCTION(BlueprintCallable)
-		void RemoveQuest(int32 QuestIndexToRemove);
+	TArray<FQuest> GetActiveQuests();
 
-	UFUNCTION(BlueprintCallable)
-		int32 FindQuest(FString QuestNameToFind);
+	TArray<FQuest> GetFinishedQuests();
+
+	void AddQuest(FQuest QuestToAdd);
+
+	void RemoveQuest(FName QuestIDToRemove);
+
+	void FinishQuest(FName QuestToFinish);
+	
+	int32 FindQuestIndex(FName QuestIDToFind, bool& bIsFound);
+
+	bool CheckQuest(FName QuestIDToCheck);
 };

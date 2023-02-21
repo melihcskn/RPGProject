@@ -10,10 +10,9 @@
 
 void UMainMenuGraphicOptions::NativeConstruct()
 {
-	
-	WidgetItems.Push(Resolution);
-	WidgetItems.Push(TextureQuality);
-	WidgetItems.Push(AntiAliasingQuality);
+	AddWidgetItem(Resolution, 0);
+	AddWidgetItem(TextureQuality, 1);
+	AddWidgetItem(AntiAliasingQuality,2);
 
 	TArray<FIntPoint> Res;
 	UKismetSystemLibrary::GetSupportedFullscreenResolutions(Res);

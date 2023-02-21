@@ -1,5 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+DECLARE_DELEGATE_OneParam(FOnItemClicked, int32 ItemIndex);
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -23,11 +25,17 @@ class RPGPROJECT_API IMenuItemsInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
+	int32 ItemIndex;
+
 	virtual void SetSelected();
 
 	virtual void UnSelect();
 
 	virtual void Apply();
 
-	
+	int32 GetItemIndex();
+
+	void SetItemIndex(int32 ItemIndexToSet);
+
+	FOnItemClicked ItemClicked;
 };

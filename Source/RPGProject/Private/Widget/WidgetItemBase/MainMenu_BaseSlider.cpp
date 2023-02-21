@@ -42,7 +42,7 @@ void UMainMenu_BaseSlider::SwitchLeft()
 {
 	IMenuSwitchableItemInterface::SwitchLeft();
 
-	SliderValue = FMath::Clamp(SliderValue-(VolumeSLider->StepSize),VolumeSLider->MinValue,VolumeSLider->MaxValue);
+	SliderValue = FMath::Clamp(SliderValue-(VolumeSLider->GetStepSize()),VolumeSLider->GetMinValue(),VolumeSLider->GetMaxValue());
 	VolumeSLider->SetValue(SliderValue);
 }
 
@@ -50,6 +50,6 @@ void UMainMenu_BaseSlider::SwitchRight()
 {
 	IMenuSwitchableItemInterface::SwitchRight();
 
-	SliderValue = FMath::Clamp(SliderValue+(VolumeSLider->StepSize),VolumeSLider->MinValue,VolumeSLider->MaxValue);
+	SliderValue = FMath::Clamp(SliderValue+(VolumeSLider->GetStepSize()),VolumeSLider->GetMinValue(),VolumeSLider->GetMaxValue());
 	VolumeSLider->SetValue(SliderValue);
 }

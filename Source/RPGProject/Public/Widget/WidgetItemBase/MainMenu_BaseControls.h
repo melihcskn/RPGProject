@@ -42,8 +42,6 @@ private:
 	bool ItemType;
 
 	bool bIsReadyForKeyInput;
-	
-	uint8 ItemIndex;
 
 public:
 

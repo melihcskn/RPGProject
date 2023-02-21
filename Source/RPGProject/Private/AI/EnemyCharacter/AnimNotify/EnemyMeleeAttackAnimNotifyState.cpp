@@ -6,9 +6,9 @@
 #include "AI/EnemyCharacter/EnemyCharacter.h"
 
 void UEnemyMeleeAttackAnimNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-                                                   float TotalDuration)
+	float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
-	Super::NotifyBegin(MeshComp, Animation, TotalDuration);
+	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
 	AEnemyCharacter* EnemyChar = Cast<AEnemyCharacter>(MeshComp->GetOwner());
 	if(EnemyChar)
@@ -17,9 +17,10 @@ void UEnemyMeleeAttackAnimNotifyState::NotifyBegin(USkeletalMeshComponent* MeshC
 	}
 }
 
-void UEnemyMeleeAttackAnimNotifyState::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UEnemyMeleeAttackAnimNotifyState::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, 
+	const FAnimNotifyEventReference& EventReference)
 {
-	Super::NotifyEnd(MeshComp, Animation);
+	Super::NotifyEnd(MeshComp, Animation, EventReference);
 	
 	AEnemyCharacter* EnemyChar = Cast<AEnemyCharacter>(MeshComp->GetOwner());
 	if(EnemyChar)

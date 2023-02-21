@@ -25,15 +25,19 @@ protected:
 	virtual void SetupInputComponent() override;
 	
 	UMyGameInstance* GI;
-
+	
 	APlayerHUD* MyHud;
-
-	UUserWidget* CurrentWidget;
-
+	
 	APlayerCharacter* PossessedPawn;
 
 	UFUNCTION()
+	void OpenMainMenu();
+	
+	UFUNCTION()
 	void OpenInventory();
+
+	UFUNCTION()
+	void OpenQuests();
 
 
 public:

@@ -15,3 +15,13 @@ void IMenuItemsInterface::UnSelect()
 void IMenuItemsInterface::Apply()
 {
 }
+
+int32 IMenuItemsInterface::GetItemIndex()
+{
+	return ItemIndex;
+}
+
+void IMenuItemsInterface::SetItemIndex(int32 ItemIndexToSet)
+{
+	ItemIndex = ItemIndexToSet;
+}

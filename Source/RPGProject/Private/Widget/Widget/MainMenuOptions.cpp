@@ -10,9 +10,10 @@
 
 void UMainMenuOptions::NativeConstruct()
 {
-	WidgetItems.Push(SoundButton);
-	WidgetItems.Push(GraphicsButton);
-	WidgetItems.Push(ControlsButton);
+
+	AddWidgetItem(SoundButton, 0);
+	AddWidgetItem(GraphicsButton, 1);
+	AddWidgetItem(ControlsButton,2);
 	
 	Super::NativeConstruct();
 
@@ -36,10 +37,6 @@ void UMainMenuOptions::OpenSoundOptions()
 	if(MyHud->SoundOptionClass)
 	{
 		UMainMenu_BaseWidget* BW = Cast<UMainMenu_BaseWidget>(CreateWidget(PC,MyHud->SoundOptionClass));
-		if(BW)
-		{
-			BW->AddToViewport();
-		}
 	}
 }
 
@@ -48,10 +45,6 @@ void UMainMenuOptions::OpenGraphicsOption()
 	if(MyHud->GraphicOptionClass)
 	{
 		UMainMenu_BaseWidget* BW = Cast<UMainMenu_BaseWidget>(CreateWidget(PC,MyHud->GraphicOptionClass));
-		if(BW)
-		{
-			BW->AddToViewport();
-		}
 	}
 }
 
@@ -59,10 +52,6 @@ void UMainMenuOptions::OpenControlsOption()
 {
 	if(MyHud->ContrlOptionClass)
 	{
-		UMainMenu_BaseWidget* BW = Cast<UMainMenu_BaseWidget>(CreateWidget(PC,MyHud->ContrlOptionClass));
-		if(BW)
-		{
-			BW->AddToViewport();
-		}
+		UUserWidget* BW = Cast<UUserWidget>(CreateWidget(PC,MyHud->ContrlOptionClass));
 	}
 }

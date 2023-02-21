@@ -21,8 +21,8 @@ void UPlayerHUDWidget::NativeConstruct()
 void UPlayerHUDWidget::SetInitials()
 {
 	InteractionText->SetVisibility(ESlateVisibility::Hidden);
-	HealthBar->BarFillType = EProgressBarFillType::BottomToTop;
-	HealthBar->FillColorAndOpacity = FLinearColor(FColor::Red);
+	HealthBar->SetBarFillType(EProgressBarFillType::BottomToTop);
+	HealthBar->SetFillColorAndOpacity(FLinearColor(FColor::Red));
 }
 
 //Set player health

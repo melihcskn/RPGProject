@@ -6,8 +6,9 @@
 #include "WidgetPlayerController.h"
 #include "Widget/WidgetBase/MainMenu_BaseWidget.h"
 #include "Player/PlayerCharacter/PlayerCharacter.h"
-#include "Engine/Canvas.h"
 #include "GameFramework/InputSettings.h"
+#include "Logging/LogMacros.h"
+#include "Logging/LogMacros.h"
 #include "Player/PlayerCharacter/Components/PlayerCharacter_HealthComponent.h"
 #include "Player/PlayerCharacter/Components/PlayerInventory.h"
 #include "Player/PlayerCharacter/Weapon/PlayerWeapon.h"
@@ -46,7 +47,9 @@ void APlayerHUD::BeginPlay()
 	{
 		UMainMenu* MMenu = Cast<UMainMenu>(CreateWidget(GetWorld()->GetFirstPlayerController(),MainMenuClass));
 		if(MMenu)
-			MMenu->AddToViewport();
+		{
+			AddWidget(MMenu);
+		}
 	}
 	
 	Health=OwnerHealth->GetCurrentHP();
@@ -181,21 +184,40 @@ void APlayerHUD::SetInteract(ESlateVisibility VisibilityOption)
 //Remove current widget
 void APlayerHUD::RemoveWidget()
 {
-	if(WidgetHistory.Num()-1>0)
+	//Check if widgets are stacked
+	if(WidgetHistory.Num()>1)
 	{
-		WidgetHistory.Last()->RemoveFromParent();
-		WidgetHistory.Last()->Destruct();
+		CurrentWidget->RemoveFromParent();
 		WidgetHistory.Pop();
 		CurrentWidget = Cast<UWidgetBase>(WidgetHistory.Last());
 		CurrentWidget->SetFocusOptions();
 		CurrentWidget->SetKeyboardFocus();
+	}
+	else if(WidgetHistory.Num() == 1)
+	{
+		WidgetHistory.Pop();
+		CurrentWidget->RemoveFromParent();
+		CurrentWidget = nullptr;
+		GetWorld()->GetFirstPlayerController()->SetInputMode(FInputModeGameOnly());
+		Cast<AWidgetPlayerController>(GetWorld()->GetFirstPlayerController())->SetShowMouseCursor(false);
 	}
 }
 
 //Add new widget to WidgetHistory
 void APlayerHUD::AddWidget(UUserWidget* WidgetToAdd)
 {
-	WidgetHistory.Push(WidgetToAdd);
-	CurrentWidget = Cast<UWidgetBase>(WidgetToAdd);
-	CurrentWidget->SetFocusOptions();
+	//If player tries to open same widget, remove it
+	if(CurrentWidget && CurrentWidget->GetClass() == WidgetToAdd->GetClass())
+	{
+		RemoveWidget();
+	}
+	//Add new widget
+	else
+	{
+		Cast<AWidgetPlayerController>(GetWorld()->GetFirstPlayerController())->SetShowMouseCursor(true);
+		WidgetHistory.Push(WidgetToAdd);
+		CurrentWidget = Cast<UWidgetBase>(WidgetToAdd);
+		CurrentWidget->AddToViewport();
+		CurrentWidget->SetFocusOptions();
+	}
 }

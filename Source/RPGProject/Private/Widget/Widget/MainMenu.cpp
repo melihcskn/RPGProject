@@ -17,10 +17,9 @@
 
 void UMainMenu::NativeConstruct()
 {
-
-	WidgetItems.Push(StartGameButton);
-	WidgetItems.Push(OptionsButton);
-	WidgetItems.Push(QuitButton);
+	AddWidgetItem(StartGameButton, 0);
+	AddWidgetItem(OptionsButton, 1);
+	AddWidgetItem(QuitButton, 2);
 	
 	Super::NativeConstruct();
 
@@ -31,7 +30,7 @@ void UMainMenu::NativeConstruct()
 	OptionsButton = Cast<UMainMenu_BaseButton>(CreateWidget(this,MyHud->MenuButtonClass));
 	QuitButton = Cast<UMainMenu_BaseButton>(CreateWidget(this,MyHud->MenuButtonClass));
 
-	if(UGameplayStatics::IsGamePaused(this))
+	if(GI->bIsGameStarted)
 	{
 		Cast<UMainMenu_BaseButton>(WidgetItems[0])->ItemButton->OnClicked.AddDynamic(this,&UMainMenu::UMainMenu::ResumeGame);
 		Cast<UMainMenu_BaseButton>(WidgetItems[0])->ItemText->SetText(FText::FromString("Resume Game"));
@@ -55,8 +54,7 @@ void UMainMenu::StartGame()
 {
 	GI->bIsGameStarted = true;
 	GI->SetGameState(EGameState::Game);
-	PC->SetInputMode(FInputModeGameOnly());
-	RemoveFromParent();
+	NativeDestruct();
 }
 
 //Set ResumeGame button
@@ -64,7 +62,7 @@ void UMainMenu::ResumeGame()
 {
 	UGameplayStatics::SetGamePaused(this,false);
 	GI->SetGameState(EGameState::Game);
-	RemoveFromParent();
+	NativeDestruct();
 }
 
 //Set OpenOptions button
@@ -72,11 +70,7 @@ void UMainMenu::OpenOptions()
 {
 	if(MyHud->OptionsMenuClass)
 	{
-		UMainMenu_BaseWidget* BW = Cast<UMainMenu_BaseWidget>(CreateWidget(PC,MyHud->OptionsMenuClass));
-		if(BW)
-		{
-			BW->AddToViewport();
-		}
+		UMainMenu_BaseWidget* OptionsMenu = Cast<UMainMenu_BaseWidget>(CreateWidget(PC,MyHud->OptionsMenuClass));
 	}
 }
 

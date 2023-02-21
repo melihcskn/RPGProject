@@ -120,4 +120,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> PlayerInventoryItemWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> PlayerQuestsWidgetClass;
 };

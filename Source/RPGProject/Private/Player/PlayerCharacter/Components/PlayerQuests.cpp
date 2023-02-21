@@ -3,50 +3,124 @@
 
 #include "Player/PlayerCharacter/Components/PlayerQuests.h"
 #include "Player/PlayerCharacter/PlayerCharacter.h"
+#include "Player/PlayerCharacter/Components/PlayerInventory.h"
 
 // Sets default values for this component's properties
 UPlayerQuests::UPlayerQuests()
 {
-	MyOwner = Cast<APlayerCharacter>(GetOwner());
 }
 
-void UPlayerQuests::AddQuest(FString QName, int32 ItemQuantity, FString QExplanation, FString QItem, UTexture2D* QItemImage)
+APlayerCharacter* UPlayerQuests::GetQuestOwner()
 {
-	PlayerQuestList.Push(FPlayerQuestsStruct(QName,ItemQuantity,QExplanation,QItem,QItemImage));
+	return Cast<APlayerCharacter>(GetOwner());
 }
 
-void UPlayerQuests::SetQuest(TArray<FPlayerQuestsStruct> QuestToSet)
+TArray<FQuest> UPlayerQuests::GetActiveQuests()
 {
-	PlayerQuestList = QuestToSet;
+	return ActiveQuestList;
 }
 
-bool UPlayerQuests::IsQuestTaken(FString QuestNameToFind)
+TArray<FQuest> UPlayerQuests::GetFinishedQuests()
 {
-	if(PlayerQuestList.Num()>0)
+	return FinishedQuestList;
+}
+
+void UPlayerQuests::AddQuest(FQuest QuestToAdd)
+{
+	bool bIsFound;
+	int32 QuestIndex = FindQuestIndex(QuestToAdd.QuestID,bIsFound);
+	if(!bIsFound)
 	{
-		for(int32 i=0;i<PlayerQuestList.Num();i++)
+		ActiveQuestList.Push(QuestToAdd);
+		OnQuestChange.Broadcast();
+	}
+}
+
+void UPlayerQuests::RemoveQuest(FName QuestIDToRemove)
+{
+	bool bIsFound;
+	int32 QuestIndex = FindQuestIndex(QuestIDToRemove, bIsFound);
+	if(bIsFound)
+	{
+		ActiveQuestList.RemoveAt(QuestIndex);
+	}
+}
+
+void UPlayerQuests::FinishQuest(FName QuestToFinish)
+{
+	if(CheckQuest(QuestToFinish) && GetQuestOwner())
+	{
+		bool bIsFound;
+		const int32 QuestIndex = FindQuestIndex(QuestToFinish,bIsFound);
+		if(bIsFound)
 		{
-			if(PlayerQuestList[i].QuestName.Compare(QuestNameToFind) == 0)
+			UE_LOG(LogTemp,Warning,TEXT("1"));
+			for(int i =0;i<ActiveQuestList[QuestIndex].QuestItems.Num();i++)
+			{
+				const FName QuestItemID = ActiveQuestList[QuestIndex].QuestItems[i].QuestItemID;
+				const int32 QuestItemQuantity = ActiveQuestList[QuestIndex].QuestItems[i].QuestItemQuantity;
+				GetQuestOwner()->GetInventoryComponent()->RemoveItem(QuestItemID,QuestItemQuantity);
+			}
+			
+			for(int i = 0; i<ActiveQuestList[QuestIndex].Rewards.Num();i++)
+			{
+				const FName RewardItemID = ActiveQuestList[QuestIndex].Rewards[i].QuestItemID;
+				const int32 RewardItemQuantity = ActiveQuestList[QuestIndex].Rewards[i].QuestItemQuantity;
+				GetQuestOwner()->AddItemToPlayerInventory(RewardItemID,RewardItemQuantity);
+			}
+			
+			bool bIsFinishedBefore;
+			FindQuestIndex(QuestToFinish,bIsFinishedBefore);
+			
+			if(!bIsFinishedBefore)
+				FinishedQuestList.Add(ActiveQuestList[QuestIndex]);
+			
+			ActiveQuestList.RemoveAt(QuestIndex);
+			UE_LOG(LogTemp,Warning,TEXT("Quest Finished"));
+		}
+	}
+}
+
+int32 UPlayerQuests::FindQuestIndex(FName QuestIDToFind, bool& bIsFound)
+{
+	bIsFound=false;
+	for(int i =0;i<ActiveQuestList.Num();i++)
+	{
+		if(ActiveQuestList[i].QuestID == QuestIDToFind)
+		{
+			bIsFound=true;
+			return i;
+		}
+	}
+	return bIsFound;
+}
+
+bool UPlayerQuests::CheckQuest(FName QuestIDToCheck)
+{
+	if(!GetQuestOwner() && !QuestIDToCheck.IsValid())
+		return false;
+	
+	bool bIsFound;
+	const int32 QuestIndex = FindQuestIndex(QuestIDToCheck,bIsFound);
+	if(bIsFound && !ActiveQuestList[QuestIndex].QuestStatus)
+	{
+		if(UPlayerInventory* Inventory = GetQuestOwner()->GetInventoryComponent())
+		{
+			int32 FinishedItems=0;
+			for(int i =0;i<ActiveQuestList[QuestIndex].QuestItems.Num();i++)
+			{
+				bool bIsItemFound;
+				const int32 ItemIndex = Inventory->ItemIndexFinder(ActiveQuestList[i].QuestItems[i].QuestItemID,bIsItemFound);
+				if(bIsItemFound)
+				{
+					if(Inventory->GetInventoryItems()[ItemIndex].ItemQuantity >= ActiveQuestList[i].QuestItems[i].QuestItemQuantity)
+						FinishedItems++;
+				}
+			}
+			if(FinishedItems == ActiveQuestList[QuestIndex].QuestItems.Num())
 				return true;
 		}
 	}
 	return false;
 }
 
-void UPlayerQuests::RemoveQuest(int32 QuestIndexToRemove)
-{
-	PlayerQuestList.RemoveAt(QuestIndexToRemove);
-}
-
-int32 UPlayerQuests::FindQuest(FString QuestNameToFind)
-{
-	if(PlayerQuestList.Num()>0)
-	{
-		for(int32 i=0;i<PlayerQuestList.Num();i++)
-		{
-			if(PlayerQuestList[i].QuestName.Compare(QuestNameToFind) == 0)
-				return i;
-		}
-	}
-	return 999;
-}

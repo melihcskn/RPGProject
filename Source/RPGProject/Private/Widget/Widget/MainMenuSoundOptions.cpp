@@ -9,9 +9,9 @@
 
 void UMainMenuSoundOptions::NativeConstruct()
 {
-	WidgetItems.Push(MasterVolume);
-	WidgetItems.Push(EffectVolume);
-	WidgetItems.Push(MusicVolume);
+	AddWidgetItem(MasterVolume,0);
+	AddWidgetItem(EffectVolume, 1);
+	AddWidgetItem(MusicVolume, 2);
 	
 	Super::NativeConstruct();
 

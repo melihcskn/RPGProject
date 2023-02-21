@@ -7,9 +7,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 
 void UPlayerCharacter_NotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-                                               float TotalDuration)
+	float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
-	Super::NotifyBegin(MeshComp, Animation, TotalDuration);
+	Super::NotifyBegin(MeshComp, Animation, TotalDuration,EventReference);
 	APlayerCharacter* AnimOwner = Cast<APlayerCharacter>(MeshComp->GetOwner());
 	if(AnimOwner)
 	{
@@ -17,9 +17,10 @@ void UPlayerCharacter_NotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp,
 	}
 }
 
-void UPlayerCharacter_NotifyState::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UPlayerCharacter_NotifyState::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+	const FAnimNotifyEventReference& EventReference)
 {
-	Super::NotifyEnd(MeshComp, Animation);
+	Super::NotifyEnd(MeshComp, Animation,EventReference);
 	APlayerCharacter* AnimOwner = Cast<APlayerCharacter>(MeshComp->GetOwner());
 	if(AnimOwner)
 	{

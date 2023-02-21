@@ -24,10 +24,6 @@ class RPGPROJECT_API UMainMenu_BaseWidget : public UWidgetBase
 protected:
 
 	virtual void NativeConstruct() override;
-
-	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
-
-	void CheckPressedKeyBehaviour(FKey PressedKey);
 	
 	UMyGameInstance* GI;
 
