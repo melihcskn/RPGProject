@@ -37,6 +37,7 @@ void UMainMenuOptions::OpenSoundOptions()
 	if(MyHud->SoundOptionClass)
 	{
 		UMainMenu_BaseWidget* BW = Cast<UMainMenu_BaseWidget>(CreateWidget(PC,MyHud->SoundOptionClass));
+		MyHud->AddWidget(BW);
 	}
 }
 
@@ -45,6 +46,7 @@ void UMainMenuOptions::OpenGraphicsOption()
 	if(MyHud->GraphicOptionClass)
 	{
 		UMainMenu_BaseWidget* BW = Cast<UMainMenu_BaseWidget>(CreateWidget(PC,MyHud->GraphicOptionClass));
+		MyHud->AddWidget(BW);
 	}
 }
 
@@ -53,5 +55,6 @@ void UMainMenuOptions::OpenControlsOption()
 	if(MyHud->ContrlOptionClass)
 	{
 		UUserWidget* BW = Cast<UUserWidget>(CreateWidget(PC,MyHud->ContrlOptionClass));
+		MyHud->AddWidget(BW);
 	}
 }

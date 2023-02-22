@@ -9,6 +9,7 @@
 #include "GameFramework/InputSettings.h"
 #include "Logging/LogMacros.h"
 #include "Logging/LogMacros.h"
+#include "Logging/LogMacros.h"
 #include "Player/PlayerCharacter/Components/PlayerCharacter_HealthComponent.h"
 #include "Player/PlayerCharacter/Components/PlayerInventory.h"
 #include "Player/PlayerCharacter/Weapon/PlayerWeapon.h"
@@ -187,8 +188,8 @@ void APlayerHUD::RemoveWidget()
 	//Check if widgets are stacked
 	if(WidgetHistory.Num()>1)
 	{
-		CurrentWidget->RemoveFromParent();
 		WidgetHistory.Pop();
+		CurrentWidget->RemoveFromParent();
 		CurrentWidget = Cast<UWidgetBase>(WidgetHistory.Last());
 		CurrentWidget->SetFocusOptions();
 		CurrentWidget->SetKeyboardFocus();

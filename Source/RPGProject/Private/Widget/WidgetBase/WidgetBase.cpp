@@ -15,6 +15,7 @@ void UWidgetBase::NativeConstruct()
 	Super::NativeConstruct();
 
 	bIsFocusable = true;
+	bCanBeRemoved = true;
 
 	VerticalWidgetNavigationStep = 1;
 	HorizontalWidgetNavigationStep = 1;
@@ -23,13 +24,6 @@ void UWidgetBase::NativeConstruct()
 void UWidgetBase::NativeDestruct()
 {
 	Super::NativeDestruct();
-	
-	TWeakObjectPtr<AWidgetPlayerController> PC = GetPlayerController();
-
-	if(PC.IsValid())
-	{
-		PC->Back();
-	}
 }
 
 void UWidgetBase::SetSelectedWidget(UUserWidget* WidgetToSelect)
@@ -141,7 +135,7 @@ void UWidgetBase::CheckPressedKeyBehaviour(FKey PressedKey)
 	}
 	for (int32 i = 0; i < PC->Widget_Back.Num(); i++)
 	{
-		if (PC->Widget_Back[i] == PressedKeyName)
+		if (PC->Widget_Back[i] == PressedKeyName && bCanBeRemoved)
 		{
 			MyHud->RemoveWidget();
 		}

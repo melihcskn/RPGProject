@@ -11,7 +11,6 @@
 #include "Player/Interactable/QuestDataAsset.h"
 #include "Player/PlayerCharacter/PlayerCharacter.h"
 #include "Player/PlayerCharacter/PlayerHUD.h"
-#include "Widget/Widget/PlayerQuestsWidget.h"
 #include "Widget/Widget/QuestBoardWidget.h"
 
 void AWidgetPlayerController::BeginPlay()
@@ -116,16 +115,6 @@ void AWidgetPlayerController::NavigateLeft()
 	}
 }
 
-void AWidgetPlayerController::NavigateDown()
-{
-	MyHud->CurrentWidget->Navigate_UpDown(DOWN);
-}
-
-void AWidgetPlayerController::NavigateUp()
-{
-	MyHud->CurrentWidget->Navigate_UpDown(UP);
-}
-
 void AWidgetPlayerController::Apply()
 {
 	IMenuItemsInterface* MI = Cast<IMenuItemsInterface>(MyHud->CurrentWidget->SelectedWidget);
@@ -133,11 +122,6 @@ void AWidgetPlayerController::Apply()
 	{
 		MI->Apply();
 	}		
-}
-
-void AWidgetPlayerController::Back()
-{
-	MyHud->RemoveWidget();
 }
 
 

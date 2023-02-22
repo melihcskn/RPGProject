@@ -48,17 +48,17 @@ public:
 	UFUNCTION()
 	void NavigateLeft();
 
-	UFUNCTION()
-	void NavigateDown();
-
-	UFUNCTION()
-	void NavigateUp();
+	// UFUNCTION()
+	// void NavigateDown();
+	//
+	// UFUNCTION()
+	// void NavigateUp();
 
 	UFUNCTION()
 	void Apply();
 
-	UFUNCTION()
-	void Back();
+	// UFUNCTION()
+	// void Back();
 
 	//Defining widget control keys as string
 	//Since player can use both gamepad and keyboard variables are TArray

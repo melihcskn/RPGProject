@@ -23,6 +23,8 @@ void UMainMenu::NativeConstruct()
 	
 	Super::NativeConstruct();
 
+	bCanBeRemoved = false;
+	
 	ControlledPawn=PC->GetPawn();
 	GI->SetGameState(EGameState::Menu);
 	
@@ -54,7 +56,11 @@ void UMainMenu::StartGame()
 {
 	GI->bIsGameStarted = true;
 	GI->SetGameState(EGameState::Game);
-	NativeDestruct();
+	if(GetPlayerHUD())
+	{
+		GetPlayerHUD()->RemoveWidget();
+		UGameplayStatics::SetGamePaused(this,false);
+	}
 }
 
 //Set ResumeGame button
@@ -62,7 +68,11 @@ void UMainMenu::ResumeGame()
 {
 	UGameplayStatics::SetGamePaused(this,false);
 	GI->SetGameState(EGameState::Game);
-	NativeDestruct();
+	if(GetPlayerHUD())
+	{
+		GetPlayerHUD()->RemoveWidget();
+		UGameplayStatics::SetGamePaused(this,false);
+	}
 }
 
 //Set OpenOptions button
@@ -71,6 +81,7 @@ void UMainMenu::OpenOptions()
 	if(MyHud->OptionsMenuClass)
 	{
 		UMainMenu_BaseWidget* OptionsMenu = Cast<UMainMenu_BaseWidget>(CreateWidget(PC,MyHud->OptionsMenuClass));
+		MyHud->AddWidget(OptionsMenu);
 	}
 }
 

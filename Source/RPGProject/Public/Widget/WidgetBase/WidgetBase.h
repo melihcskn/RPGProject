@@ -44,6 +44,8 @@ protected:
 
 	uint8 SelectedWidgetItemIndex, VerticalWidgetNavigationStep, HorizontalWidgetNavigationStep;
 
+	bool bCanBeRemoved;
+
 	
 public:
 
